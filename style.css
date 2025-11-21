@@ -1,0 +1,473 @@
+:root {
+    --yellow: #F7B84B;
+    --red: #F55C5C;
+    --green: #28a745;
+    --blue: #4A90E2;
+    --purple: #9B59B6;
+    --orange: #F39C12;
+    --pink: #E74C3C;
+    --brown: #8B4513;
+    --gray: #34495E;
+    --light-gray: #7F8C8D;
+    --dark-gray: #2C3E50;
+    --black: #000000;
+    --white: #FFFFFF;
+    --light-white: #F8F9FA;
+    --dark-white: #ECF0F1;
+    --light-black: #2C3E50;
+    --dark-black: #000000;
+    --primary-color: #4A90E2; 
+    --primary-dark: #357ABD;
+    --secondary-color: #50B3A2; 
+    --text-color: #333333;
+    --light-text-color: #666666;
+    --border-color: #e0e0e0;
+    --background-light: #f8f9fa;
+    --background-dark: #e9ecef;
+    --white: #ffffff;
+    --shadow-light: rgba(0, 0, 0, 0.08);
+    --shadow-medium: rgba(0, 0, 0, 0.15);
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--background-light);
+    margin: 0;
+    padding: 0;
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 25px;
+    background-color: var(--white);
+    border-radius: 12px; 
+    box-shadow: 0 6px 20px var(--shadow-light); 
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-color);
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+nav.navbar {
+    background-color: var(--white);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px var(--shadow-light);
+    min-height: 70px; 
+}
+
+nav.navbar .nav-brand {
+    font-size: 1.6rem; 
+    font-weight: 700;
+    color: var(--primary-color);
+    text-decoration: none;
+    padding: 18px 0;
+    display: flex;
+    align-items: center;
+}
+
+.nav-brand img {
+    height: 45px; 
+    margin-right: 12px;
+}
+
+nav.navbar .nav-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 25px; 
+}
+
+nav.navbar .nav-links li {
+    margin-left: 0; 
+}
+
+nav.navbar .nav-links a {
+    text-decoration: none;
+    color: var(--light-text-color);
+    font-weight: 600;
+    padding: 25px 0; 
+    display: block;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+nav.navbar .nav-links a:hover {
+    color: var(--primary-dark);
+    border-bottom-color: var(--primary-color);
+}
+
+nav.navbar .nav-links a.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+nav.navbar .nav-links a.logout-link {
+    background-color: #FF6B6B; /* Đỏ tươi hơn */
+    color: var(--white);
+    padding: 10px 20px;
+    border-radius: 8px; /* Bo tròn góc */
+    margin-top: 10px;
+    border-bottom: none;
+    font-weight: 700;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+nav.navbar .nav-links a.logout-link:hover {
+    background-color: #FF4757; 
+    transform: translateY(-2px); 
+}
+
+.view.active {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 90vh; 
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.form-container {
+    background: var(--white);
+    padding: 3rem; /* Tăng padding */
+    border-radius: 12px;
+    box-shadow: 0 8px 25px var(--shadow-medium); /* Đổ bóng mạnh hơn */
+    width: 100%;
+    max-width: 480px; /* Rộng hơn 1 chút */
+    box-sizing: border-box;
+}
+
+.form-container .logo {
+    display: block;
+    width: 90px !important; /* To hơn 1 chút */
+    height: 90px !important;
+    margin: 0 auto 2rem auto !important; /* Tăng khoảng cách dưới */
+    object-fit: contain !important;
+}
+
+.form-container h2 {
+    text-align: center;
+    color: var(--text-color);
+    margin-bottom: 2rem; /* Tăng khoảng cách dưới */
+    font-size: 2rem; /* To hơn */
+}
+
+/* --- SỬA LỖI "ĂN KHỚP" ---
+    Thêm input[type="email"] và input[type="date"] vào đây 
+*/
+.form-container input[type="text"],
+.form-container input[type="password"],
+.form-container input[type="number"],
+.form-container input[type="float"],
+.form-container input[type="email"], /* <-- THÊM VÀO */
+.form-container input[type="date"],  /* <-- THÊM VÀO */
+.form-container textarea,
+.form-container select {
+    width: 100%;
+    padding: 14px; /* Tăng padding */
+    margin-bottom: 1.5rem; /* Tăng khoảng cách dưới */
+    border: 1px solid var(--border-color);
+    border-radius: 8px; /* Bo tròn góc */
+    box-sizing: border-box;
+    font-size: 1.05rem; /* To hơn 1 chút */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.form-container input:focus,
+.form-container textarea:focus,
+.form-container select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2); /* Đổ bóng khi focus */
+    outline: none;
+}
+
+
+.form-container input:disabled {
+    background-color: var(--background-dark);
+    cursor: not-allowed;
+}
+
+.form-container button[type="submit"] {
+    width: 100%; 
+    padding: 14px; 
+    background-color: var(--primary-color); 
+    color: var(--white); 
+    border: none; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    font-size: 1.1rem;
+    font-weight: 700; 
+    transition: background-color 0.3s ease, transform 0.2s ease; 
+    box-shadow: 0 4px 10px rgba(74, 144, 226, 0.3); 
+}
+
+.form-container button[type="submit"]:hover {
+    background-color: var(--primary-dark); 
+    transform: translateY(-2px); 
+}
+
+.form-container p {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: var(--light-text-color);
+}
+
+.form-container p a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.form-container p a:hover {
+    text-decoration: underline;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+    gap: 20px; /*form ql*/
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+.form-group label {
+    margin-bottom: 8px; 
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 0.95rem;
+}
+
+.form-container .form-group input,
+.form-container .form-group textarea,
+.form-container .form-group select {
+    margin-bottom: 0; 
+}
+
+.form-container .form-group {
+    margin-bottom: 1.5rem;
+}
+
+
+.form-group small {
+    font-size: 0.8rem;
+    color: var(--light-text-color);
+    margin-top: 5px;
+}
+
+.btn-cancel {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background-color: var(--light-text-color);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 700;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    text-align: center;
+    text-decoration: none;
+    margin-top: 15px;
+    box-sizing: border-box;
+}
+.btn-cancel:hover {
+    background-color: #555;
+    transform: translateY(-2px);
+}
+
+
+.message {
+    padding: 18px;
+    margin-bottom: 25px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-align: center;
+    font-size: 1.05rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.message.success {
+    background-color: #e6ffed; 
+    color: #28a745;
+    border: 1px solid #a3e6bb;
+}
+.message.error {
+    background-color: #ffe6e6; 
+    color: #dc3545;
+    border: 1px solid #e6b3b3;
+}
+.message.info {
+    background-color: #e6f7ff;
+    color: #17a2b8;
+    border: 1px solid #a3d9eb;
+}
+
+.table-container {
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: 0 6px 20px var(--shadow-light);
+    overflow-x: auto;
+    margin-top: 2rem; 
+
+table {
+    width: 100%;
+    border-collapse: separate; 
+    border-spacing: 0; 
+}
+
+table th, table td {
+    padding: 18px; /* Tăng padding */
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+
+table th {
+    background-color: var(--background-dark);
+    font-weight: 700;
+    color: var(--text-color);
+    text-transform: uppercase; /* Chữ hoa */
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}
+/* Bo tròn góc cho th đầu và cuối */
+table th:first-child { border-top-left-radius: 12px; }
+table th:last-child { border-top-right-radius: 12px; }
+
+table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+table tbody tr:hover {
+    background-color: var(--background-dark);
+}
+
+.table-actions {
+    display: flex;
+    gap: 10px;
+    white-space: nowrap;
+}
+.table-actions a, .table-actions button { /* Bao gồm cả button */
+    text-decoration: none;
+    padding: 8px 15px; /* Tăng padding */
+    border-radius: 6px; /* Bo tròn góc */
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--white);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none; /* Xóa border cho button */
+}
+.table-actions a:hover, .table-actions button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.btn-edit {
+    background-color: #F7B84B; /* Vàng cam */
+    color: var(--text-color);
+    box-shadow: 0 2px 6px rgba(247, 184, 75, 0.3);
+}
+.btn-delete {
+    background-color: #F55C5C; /* Đỏ */
+    box-shadow: 0 2px 6px rgba(245, 92, 92, 0.3);
+}
+
+.search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 2rem;
+}
+.search-bar input[type="text"] {
+    flex-grow: 1;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+}
+.search-bar button {
+    padding: 12px 20px;
+    background-color: var(--secondary-color);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+.search-bar button:hover {
+    background-color: #449989;
+    transform: translateY(-2px);
+}
+.search-bar a.clear-button {
+    padding: 12px 20px;
+    background-color: var(--light-text-color);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+    line-height: 1.6; /* Căn chỉnh chiều cao text */
+}
+.search-bar a.clear-button:hover {
+    background-color: #555;
+}
+
+
+@media (max-width: 768px) {
+    nav.navbar {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 15px 5%;
+    }
+    nav.navbar .nav-links {
+        width: 100%;
+        justify-content: space-around;
+        margin-top: 10px;
+    }
+    nav.navbar .nav-links li {
+        margin-left: 0;
+    }
+    nav.navbar .nav-links a {
+        padding: 10px 5px;
+        text-align: center;
+    }
+    nav.navbar .nav-links a.logout-link {
+        margin-top: 0;
+    }
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.auth-background {
+    background-image: 
+        linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
+        url('background.jpg');
+    
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    
+    min-height: 100vh !important; 
+}
+
+.auth-background .form-container {
+    background-color: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); /* Đổ bóng mạnh hơn */
+}

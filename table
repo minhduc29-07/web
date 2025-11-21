@@ -1,0 +1,59 @@
+--
+-- Cơ sở dữ liệu: `shoe_store`
+--
+CREATE DATABASE IF NOT EXISTS `shoe_store` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `shoe_store`;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `users`
+--
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE `users` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `username` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `role` enum('staff','admin') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'staff',
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `dob` date DEFAULT NULL,
+  `location` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `username` (`username`),
+  UNIQUE KEY `email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Thêm tài khoản admin mặc định (MẬT KHẨU KHÔNG MÃ HÓA)
+--
+INSERT INTO `users` (`username`, `password`, `role`, `email`, `dob`, `location`) 
+VALUES
+('admin', '123456', 'admin', 'admin@shop.com', '2000-01-01', 'Hanoi');
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `shoes`
+--
+DROP TABLE IF EXISTS `shoes`;
+CREATE TABLE `shoes` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `sku` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `brand` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `size` int(11) NOT NULL,
+  `quantity` int(11) NOT NULL DEFAULT 0,
+  `price` decimal(10,0) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `sku` (`sku`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dữ liệu mẫu cho bảng `shoes`
+--
+INSERT INTO `shoes` (`sku`, `name`, `brand`, `size`, `quantity`, `price`) 
+VALUES
+('AD-SS-001', 'Superstar Shoes', 'Adidas', 40, 15, 2200000),
+('NIKE-AF1-001', 'Air Force 1 \'07', 'Nike', 41, 10, 2800000);
