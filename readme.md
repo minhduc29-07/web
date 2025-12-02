@@ -1,26 +1,25 @@
-```mermaid
 erDiagram
-    %% Định nghĩa bảng USERS
+    %% Định nghĩa bảng USERS (Quản lý Tài khoản)
     USERS {
-        int id PK "ID Người dùng"
-        varchar username UK "Tên đăng nhập"
-        varchar password "Mật khẩu"
-        varchar email UK "Email"
+        int id PK
+        varchar(50) username UK "Tên đăng nhập"
+        varchar(255) password "Mật khẩu (Plain Text)"
+        varchar(100) email UK
         date dob "Ngày sinh"
-        varchar location "Địa điểm"
-        enum role "Vai trò (admin/staff)"
+        varchar(100) location "Địa điểm"
+        enum role "Vai trò ('admin', 'staff')"
     }
     
-    %% Định nghĩa bảng SHOES
+    %% Định nghĩa bảng SHOES (Quản lý Sản phẩm)
     SHOES {
-        int id PK "ID Sản phẩm"
-        varchar sku UK "Mã SKU"
-        varchar name "Tên sản phẩm"
-        varchar brand "Thương hiệu"
-        int size "Kích cỡ"
+        int id PK
+        varchar(50) sku UK "Mã SKU"
+        varchar(100) name "Tên sản phẩm"
+        varchar(100) brand "Thương hiệu"
+        int size
         int quantity "Số lượng tồn kho"
-        decimal price "Giá (VND)"
+        decimal(10,2) price "Giá (VND)"
     }
     
-    %% Mối quan hệ logic
+    %% Mối quan hệ logic: Một người dùng có thể quản lý nhiều sản phẩm.
     USERS ||--o{ SHOES : Quản_lý
