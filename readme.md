@@ -1,25 +1,64 @@
 erDiagram
-    %% Định nghĩa bảng USERS (Quản lý Tài khoản)
+    %% Bảng ROLES: Bảng tham chiếu cho quyền hạn
+    ROLES {
+        int id PK
+        varchar name "Tên vai trò (Admin, Staff)"
+        varchar description
+    }
+    
+    %% Bảng USERS: Đã cập nhật để dùng password_hash và role_id (giống sơ đồ tham chiếu)
     USERS {
         int id PK
-        varchar(50) username UK "Tên đăng nhập"
-        varchar(255) password "Mật khẩu (Plain Text)"
-        varchar(100) email UK
-        date dob "Ngày sinh"
-        varchar(100) location "Địa điểm"
-        enum role "Vai trò ('admin', 'staff')"
+        varchar username UK
+        varchar password_hash "Hash mật khẩu (thay vì Plain Text)"
+        varchar email UK
+        varchar dob "Ngày sinh (Từ App Gốc)"
+        varchar location "Địa điểm (Từ App Gốc)"
+        int role_id FK "Liên kết tới ROLES"
+        datetime created_at
+        datetime updated_at
+        tinyint is_active
     }
     
-    %% Định nghĩa bảng SHOES (Quản lý Sản phẩm)
+    %% Bảng SHOES: Bổ sung Khóa ngoại để liên kết người quản lý
     SHOES {
         int id PK
-        varchar(50) sku UK "Mã SKU"
-        varchar(100) name "Tên sản phẩm"
-        varchar(100) brand "Thương hiệu"
+        varchar sku UK
+        varchar name
+        varchar brand
         int size
-        int quantity "Số lượng tồn kho"
-        decimal(10,2) price "Giá (VND)"
+        int quantity
+        decimal price
+        int created_by_user_id FK "Người tạo/Quản lý sản phẩm"
+    }
+
+    %% Bảng SESSIONS: Quản lý phiên đăng nhập và hoạt động của người dùng
+    SESSIONS {
+        int id PK
+        int user_id FK
+        varchar session_token
+        datetime created_at
+        datetime last_activity
+        varchar ip_address
+        varchar user_agent
     }
     
-    %% Mối quan hệ logic: Một người dùng có thể quản lý nhiều sản phẩm.
-    USERS ||--o{ SHOES : Quản_lý
+    %% Bảng PASSWORD_RESETS: Tính năng quên mật khẩu an toàn
+    PASSWORD_RESETS {
+        int id PK
+        int user_id FK
+        varchar token
+        datetime expires_at
+        datetime requested_at
+        tinyint used
+    }
+
+    %% MỐI QUAN HỆ (Relationships)
+
+    USERS ||--|{ ROLES : belongs_to "Người dùng thuộc về 1 Vai trò"
+    
+    USERS ||--o{ SHOES : manages "Người dùng quản lý nhiều sản phẩm"
+    
+    USERS ||--o{ SESSIONS : has "Người dùng có nhiều phiên hoạt động"
+    
+    USERS ||--o{ PASSWORD_RESETS : has "Người dùng có nhiều yêu cầu reset mật khẩu"
