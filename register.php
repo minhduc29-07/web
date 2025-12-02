@@ -1,5 +1,12 @@
 <?php
 require_once 'db.php';
+
+//Kiểm tra xem hàm html_safe có tồn tại không. Nếu không, sử dụng htmlspecialchars để đảm bảo an toàn.
+if (!function_exists('html_safe')) {
+    function html_safe($string) {
+        return htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
+    }
+}
 $message = '';
 $message_type = '';
 
@@ -16,7 +23,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($username) || empty($password) || empty($email) || empty($dob) || empty($location)) {
         $message = "Please fill in all fields."; // Translated
         $message_type = 'error';
-    } else {
+    } 
+    elseif (strlen($password) < 6) {
+        $message = "Mật khẩu phải có ít nhất 6 ký tự.";
+        $message_type = 'error';
+    }
+
+    else {
+        // 2. LỖI BẢO MẬT NGHIÊM TRỌNG: Băm (Hash) mật khẩu trước khi lưu
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+        
         // Check if username or email already exists
         $stmt_check = $conn->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
         $stmt_check->bind_param("ss", $username, $email);
