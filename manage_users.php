@@ -16,16 +16,17 @@ $is_editing = false;
 
 // --- HANDLE POST (CREATE & UPDATE) ---
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_user'])) {
-    
+
     $username = $conn->real_escape_string($_POST['username']);
-    $password = $_POST['password']; // Plain text password
+    $password = $_POST['password']; // Plain text password (only for new users or changes)
     $email = $conn->real_escape_string($_POST['email']);
     $dob = $conn->real_escape_string($_POST['dob']);
     $location = $conn->real_escape_string($_POST['location']);
     $role = $conn->real_escape_string($_POST['role']);
-    $user_id = $conn->real_escape_string($_POST['user_id']);
+    $user_id = $conn->real_escape_string($_POST['user_id']); // empty when creating new user
 
-    // Retain values
+    // Keep form values after submit
+    $edit_user_id = $user_id;
     $edit_username = $username;
     $edit_email = $email;
     $edit_dob = $dob;
@@ -34,99 +35,99 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_user'])) {
 
     // Validation
     if (empty($username) || empty($email) || empty($dob) || empty($location) || empty($role)) {
-        $message = "Error: Please fill in all fields (except Password if not changing)."; // Translated
+        $message = "Error: Please fill in all fields (except Password if not changing).";
         $message_type = 'error';
-    } else {
-        
-        try {
-            if (!empty($user_id)) {
-                // --- UPDATE (U) ---
-                $is_editing = true;
-                $edit_user_id = $user_id;
+    }
+    // Validation for creating NEW account
+    else if (empty($user_id) && empty($password)) {
+        $message = "Error: Please enter a password for the new account.";
+        $message_type = 'error';
+    }
+    // Validate password length only when entered
+    else if (!empty($password) && strlen($password) < 6) { 
+        $message = "Password must be at least 6 characters.";
+        $message_type = 'error';
+    } 
+    else {
+        // --- CREATE NEW USER ---
+        if (empty($user_id)) {
 
-                if (!empty($password)) {
-                    // Update WITH password
-                    $stmt = $conn->prepare("UPDATE users SET username = ?, password = ?, email = ?, dob = ?, location = ?, role = ? WHERE id = ?");
-                    $stmt->bind_param("ssssssi", $username, $password, $email, $dob, $location, $role, $user_id);
-                } else {
-                    // Update WITHOUT password
-                    $stmt = $conn->prepare("UPDATE users SET username = ?, email = ?, dob = ?, location = ?, role = ? WHERE id = ?");
-                    $stmt->bind_param("sssssi", $username, $email, $dob, $location, $role, $user_id);
-                }
-                
-                $stmt->execute();
-                
-                if ($stmt->affected_rows > 0) {
-                    $message = "Account updated successfully!"; // Translated
-                    $message_type = 'success';
-                } else {
-                    $message = "No changes made or error during update."; // Translated
-                    $message_type = 'info';
-                }
+            // Check username/email uniqueness
+            $stmt_check = $conn->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
+            $stmt_check->bind_param("ss", $username, $email);
+            $stmt_check->execute();
+            $stmt_check->store_result();
 
+            if ($stmt_check->num_rows > 0) {
+                $message = "Username or Email already exists.";
+                $message_type = 'error';
             } else {
-                // --- CREATE (C) ---
-                if (empty($password)) {
-                    $message = "Error: Password is required when creating a new account."; // Translated
+                // SECURITY: Hash password before saving
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+                if (!$hashed_password) {
+                    $message = "Critical Error: password_hash() failed.";
                     $message_type = 'error';
                 } else {
-                    $stmt = $conn->prepare("INSERT INTO users (username, password, email, dob, location, role) VALUES (?, ?, ?, ?, ?, ?)");
-                    $stmt->bind_param("ssssss", $username, $password, $email, $dob, $location, $role);
-                    
-                    $stmt->execute();
+                    $stmt = $conn->prepare("INSERT INTO users (username, password, role, email, dob, location) VALUES (?, ?, ?, ?, ?, ?)");
+                    $stmt->bind_param("ssssss", $username, $hashed_password, $role, $email, $dob, $location);
 
-                    if ($stmt->affected_rows > 0) {
-                        $message = "New account created successfully!"; // Translated
+                    if ($stmt->execute()) {
+                        $message = "User created successfully!";
                         $message_type = 'success';
-                        // Clear form
+
+                        // Reset form input
                         $edit_username = $edit_email = $edit_dob = $edit_location = '';
                         $edit_role = 'staff';
                     } else {
-                         $message = "Error: Could not create account."; // Translated
-                         $message_type = 'error';
+                        $message = "Error adding user: " . $stmt->error;
+                        $message_type = 'error';
                     }
+                    $stmt->close();
                 }
             }
-            $stmt->close();
+            $stmt_check->close();
+        } 
+        
+        // --- UPDATE EXISTING USER ---
+        else {
+            $stmt = null;
 
-        } catch (mysqli_sql_exception $e) {
-            if ($e->getCode() == 1062) { // Duplicate entry
-                $message = "Error: Username or Email already exists."; // Translated
-                $message_type = 'error';
+            // If admin entered new password
+            if (!empty($password)) {
+
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+                if (!$hashed_password) {
+                    $message = "Critical Error: password_hash() failed.";
+                    $message_type = 'error';
+                } else {
+                    $stmt = $conn->prepare("UPDATE users SET username = ?, password = ?, email = ?, dob = ?, location = ?, role = ? WHERE id = ?");
+                    $stmt->bind_param("ssssssi", $username, $hashed_password, $email, $dob, $location, $role, $user_id);
+                }
             } else {
-                $message = "Database Error: " . $e->getMessage(); // Translated
-                $message_type = 'error';
+                // Update WITHOUT changing password
+                $stmt = $conn->prepare("UPDATE users SET username = ?, email = ?, dob = ?, location = ?, role = ? WHERE id = ?");
+                $stmt->bind_param("sssssi", $username, $email, $dob, $location, $role, $user_id);
+            }
+
+            if ($stmt) {
+                if ($stmt->execute()) {
+                    $message = "User updated successfully!";
+                    $message_type = 'success';
+                    $is_editing = false;
+                    $edit_user_id = '';
+                } else {
+                    $message = "Error updating user: " . $stmt->error;
+                    $message_type = 'error';
+                }
+                $stmt->close();
             }
         }
     }
 }
 
-// --- HANDLE GET (DELETE / EDIT) ---
-
-// --- DELETE (D) ---
-if (isset($_GET['delete'])) {
-    $user_id_to_delete = (int)$_GET['delete'];
-    
-    // Safety: Don't let admin delete themselves
-    if ($user_id_to_delete == $_SESSION['user_id']) {
-        $message = "Error: You cannot delete your own account."; // Translated
-        $message_type = 'error';
-    } else {
-        $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
-        $stmt->bind_param("i", $user_id_to_delete);
-        
-        if ($stmt->execute() && $stmt->affected_rows > 0) {
-            $message = "Account deleted successfully."; // Translated
-            $message_type = 'success';
-        } else {
-            $message = "Error deleting account."; // Translated
-            $message_type = 'error';
-        }
-        $stmt->close();
-    }
-}
-
-// --- READ (R) - Get 1 record for Edit ---
+// --- READ SINGLE USER FOR EDIT ---
 if (isset($_GET['edit'])) {
     $user_id_to_edit = (int)$_GET['edit'];
     $stmt = $conn->prepare("SELECT username, email, dob, location, role FROM users WHERE id = ?");
@@ -147,7 +148,7 @@ if (isset($_GET['edit'])) {
     $stmt->close();
 }
 
-// --- READ (R) - Get all users ---
+// --- READ ALL USERS ---
 $users_list = [];
 $result_read = $conn->query("SELECT id, username, email, dob, location, role FROM users ORDER BY username ASC");
 while ($row = $result_read->fetch_assoc()) {
@@ -157,11 +158,11 @@ $conn->close();
 ?>
 
 <!DOCTYPE html>
-<html lang="en"> <!-- Changed lang to en -->
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Management</title> <!-- Translated -->
+    <title>User Management</title>
     <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
 </head>
 <body>
@@ -170,9 +171,9 @@ $conn->close();
 
     <div class="container">
         
-        <!-- Add/Edit User Form -->
+        <!-- Add/Edit Form -->
         <div class="form-container" style="max-width: none; box-shadow: none; padding: 0; margin: 0;">
-            <h3><?php echo $is_editing ? 'Update Account' : 'Create New Account'; ?></h3> <!-- Translated -->
+            <h3><?php echo $is_editing ? 'Update Account' : 'Create New Account'; ?></h3>
             
             <?php if (!empty($message)): ?>
                 <div class="message <?php echo $message_type; ?>">
@@ -185,80 +186,76 @@ $conn->close();
 
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="username">Username</label> <!-- Translated -->
+                        <label for="username">Username</label>
                         <input type="text" id="username" name="username" value="<?php echo html_safe($edit_username); ?>" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="password">Password</label> <!-- Translated -->
+                        <label for="password">Password</label>
                         <input type="password" id="password" name="password" 
-                               placeholder="<?php echo $is_editing ? 'Leave blank to keep same password' : 'Required'; ?>" 
-                               <?php echo !$is_editing ? 'required' : ''; ?>> <!-- Translated -->
+                               placeholder="<?php echo $is_editing ? 'Leave blank to keep current password' : 'Required'; ?>"
+                               <?php echo !$is_editing ? 'required' : ''; ?>>
                     </div>
                     
                     <div class="form-group">
-                        <label for="email">Email</label> <!-- Translated -->
+                        <label for="email">Email</label>
                         <input type="email" id="email" name="email" value="<?php echo html_safe($edit_email); ?>" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="dob">Date of Birth</label> <!-- Translated -->
+                        <label for="dob">Date of Birth</label>
                         <input type="date" id="dob" name="dob" value="<?php echo html_safe($edit_dob); ?>" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="location">Location</label> <!-- Translated -->
+                        <label for="location">Location</label>
                         <input type="text" id="location" name="location" value="<?php echo html_safe($edit_location); ?>" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="role">Role</label> <!-- Translated -->
+                        <label for="role">Role</label>
                         <select id="role" name="role" required>
-                            <option value="staff" <?php echo ($edit_role == 'staff') ? 'selected' : ''; ?>>
-                                Staff
-                            </option> <!-- Translated -->
-                            <option value="admin" <?php echo ($edit_role == 'admin') ? 'selected' : ''; ?>>
-                                Admin
-                            </option> <!-- Translated -->
+                            <option value="staff" <?php echo ($edit_role == 'staff') ? 'selected' : ''; ?>>Staff</option>
+                            <option value="admin" <?php echo ($edit_role == 'admin') ? 'selected' : ''; ?>>Admin</option>
                         </select>
                     </div>
                 </div>
 
                 <button type="submit" name="save_user">
-                    <?php echo $is_editing ? 'Update Account' : 'Create Account'; ?> <!-- Translated -->
+                    <?php echo $is_editing ? 'Update Account' : 'Create Account'; ?>
                 </button>
                 
                 <?php if ($is_editing): ?>
-                    <a href="manage_users.php" class="btn-cancel">Cancel Edit</a> <!-- Translated -->
+                    <a href="manage_users.php" class="btn-cancel">Cancel Edit</a>
                 <?php endif; ?>
             </form>
         </div>
 
-        <!-- User List Table -->
+        <!-- USER LIST TABLE -->
         <div class="table-container">
-            <h2>Account List</h2> <!-- Translated -->
+            <h2>Account List</h2>
             <table>
                 <thead>
                     <tr>
-                        <th>Username</th> <!-- Translated -->
-                        <th>Email</th> <!-- Translated -->
-                        <th>Date of Birth</th> <!-- Translated -->
-                        <th>Location</th> <!-- Translated -->
-                        <th>Role</th> <!-- Translated -->
-                        <th>Actions</th> <!-- Translated -->
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Date of Birth</th>
+                        <th>Location</th>
+                        <th>Role</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($users_list)): ?>
                         <tr>
-                            <td colspan="6" style="text-align: center;">No accounts found.</td> <!-- Translated -->
+                            <td colspan="6" style="text-align: center;">No accounts found.</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($users_list as $user): ?>
                             <tr <?php echo ($user['id'] == $_SESSION['user_id']) ? 'style="background-color: #e6f7ff;"' : ''; ?>>
                                 <td>
                                     <?php echo html_safe($user['username']); ?>
-                                    <?php echo ($user['id'] == $_SESSION['user_id']) ? ' <strong>(You)</strong>' : ''; ?> <!-- Translated -->
+                                    <?php echo ($user['id'] == $_SESSION['user_id']) ? ' <strong>(You)</strong>' : ''; ?>
                                 </td>
                                 <td><?php echo html_safe($user['email']); ?></td>
                                 <td><?php echo html_safe($user['dob']); ?></td>
@@ -266,11 +263,11 @@ $conn->close();
                                 <td><?php echo html_safe($user['role']); ?></td>
                                 <td>
                                     <div class="table-actions">
-                                        <a href="manage_users.php?edit=<?php echo $user['id']; ?>" class="btn-edit">Edit</a> <!-- Translated -->
+                                        <a href="manage_users.php?edit=<?php echo $user['id']; ?>" class="btn-edit">Edit</a>
                                         
-                                        <?php if ($user['id'] != $_SESSION['user_id']): // Don't allow self-delete ?>
-                                            <a href="manage_users.php?delete=<?php echo $user['id']; ?>" class="btn-delete" 
-                                               onclick="return confirm('Are you sure you want to delete the account: <?php echo html_safe($user['username']); ?>?');">Delete</a> <!-- Translated -->
+                                        <?php if ($user['id'] != $_SESSION['user_id']): ?>
+                                            <a href="manage_users.php?delete=<?php echo $user['id']; ?>" class="btn-delete"
+                                               onclick="return confirm('Are you sure you want to delete the account: <?php echo html_safe($user['username']); ?>?');">Delete</a>
                                         <?php endif; ?>
                                     </div>
                                 </td>
@@ -281,7 +278,7 @@ $conn->close();
             </table>
         </div>
 
-    </div> <!-- /container -->
+    </div>
 
 </body>
 </html>
