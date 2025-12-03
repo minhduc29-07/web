@@ -2,19 +2,21 @@
 require_once 'db.php';
 $message = '';
 
+// Auto-redirect if already logged in
 if (isset($_SESSION['user_id'])) {
     header("Location: index.php");
     exit;
 }
 
 if (isset($_GET['registered'])) {
-    $message = "Registration successful! Please login.";
+    $message = "Registration successful! Please log in.";
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $conn->real_escape_string($_POST['username']);
-    $password = $_POST['password']; 
+    $password = $_POST['password']; // Password entered by user
 
+    // Fetch user info from DB
     $stmt = $conn->prepare("SELECT id, username, password, role FROM users WHERE username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
@@ -23,12 +25,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($result->num_rows == 1) {
         $user = $result->fetch_assoc();
         
-        if ($password === $user['password']) {
+        // SECURITY: Use password_verify for secure password comparison
+        if (password_verify($password, $user['password'])) {
+            // Login successful
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
-            $_SESSION['role'] = $user['role']; 
+            $_SESSION['role'] = $user['role'];
             
-            header("Location: index.php"); 
+            header("Location: index.php"); // Redirect to home page
             exit;
         } else {
             $message = "Invalid username or password.";
@@ -42,10 +46,10 @@ $conn->close();
 ?>
 
 <!DOCTYPE html>
-<html lang="en"> 
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Login</title> 
+    <title>Login</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -53,7 +57,7 @@ $conn->close();
         <div class="form-container">
             <img src="logo.png" alt="Logo" class="logo">
 
-            <h2>Login</h2> 
+            <h2>Login</h2>
             
             <?php if(!empty($message)): ?>
                 <p class="message <?php echo (isset($_GET['registered'])) ? 'success' : 'error'; ?>">
@@ -62,11 +66,11 @@ $conn->close();
             <?php endif; ?>
 
             <form action="login.php" method="POST">
-                <input type="text" name="username" placeholder="Username" required> 
-                <input type="password" name="password" placeholder="Password" required> 
-                <button type="submit">Login</button> 
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit">Login</button>
             </form>
-            <p>Don't have an account? <a href="register.php">Register now</a></p> 
+            <p>Don't have an account? <a href="register.php">Register now</a></p>
         </div>
     </div>
 </body>
