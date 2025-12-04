@@ -21,17 +21,6 @@ $edit_price = '';
 $edit_image = ''; // Biến chứa tên ảnh hiện tại khi sửa
 $is_editing = false; 
 
-// --- 1. LẤY SỐ LIỆU THỐNG KÊ (DASHBOARD) ---
-// Tính toán các con số để hiển thị trên 4 thẻ bài
-$stats = $conn->query("
-    SELECT 
-        COUNT(*) as total_products,
-        SUM(quantity) as total_stock,
-        SUM(quantity * price) as total_value,
-        COUNT(CASE WHEN quantity < 5 THEN 1 END) as low_stock
-    FROM shoes
-")->fetch_assoc();
-
 
 // Xử lý lỗi quyền truy cập
 if (isset($_GET['error'])) {
@@ -164,6 +153,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_shoe'])) {
          $is_editing = !empty($note_id);
     }
 }
+
+// --- 1. LẤY SỐ LIỆU THỐNG KÊ (DASHBOARD) ---
+// Tính toán các con số để hiển thị trên 4 thẻ bài
+$stats = $conn->query("
+    SELECT 
+        COUNT(*) as total_products,
+        SUM(quantity) as total_stock,
+        SUM(quantity * price) as total_value,
+        COUNT(CASE WHEN quantity < 5 THEN 1 END) as low_stock
+    FROM shoes
+")->fetch_assoc();
 
 // --- 3. XÓA SẢN PHẨM ---
 if (isset($_GET['delete'])) {
