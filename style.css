@@ -1,24 +1,7 @@
 :root {
-    --yellow: #F7B84B;
-    --red: #F55C5C;
-    --green: #28a745;
-    --blue: #4A90E2;
-    --purple: #9B59B6;
-    --orange: #F39C12;
-    --pink: #E74C3C;
-    --brown: #8B4513;
-    --gray: #34495E;
-    --light-gray: #7F8C8D;
-    --dark-gray: #2C3E50;
-    --black: #000000;
-    --white: #FFFFFF;
-    --light-white: #F8F9FA;
-    --dark-white: #ECF0F1;
-    --light-black: #2C3E50;
-    --dark-black: #000000;
-    --primary-color: #4A90E2; 
+    --primary-color: #4A90E2; /* Màu xanh chủ đạo */
     --primary-dark: #357ABD;
-    --secondary-color: #50B3A2; 
+    --secondary-color: #50B3A2; /* Màu xanh phụ */
     --text-color: #333333;
     --light-text-color: #666666;
     --border-color: #e0e0e0;
@@ -29,6 +12,7 @@
     --shadow-medium: rgba(0, 0, 0, 0.15);
 }
 
+/* --- CƠ BẢN --- */
 body {
     font-family: 'Inter', -apple-system, BlinkMacMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--background-light);
@@ -41,11 +25,11 @@ body {
 .container {
     width: 90%;
     max-width: 1200px;
-    margin: 30px auto;
+    margin: 30px auto; /* Tăng khoảng cách trên/dưới */
     padding: 25px;
     background-color: var(--white);
-    border-radius: 12px; 
-    box-shadow: 0 6px 20px var(--shadow-light); 
+    border-radius: 12px; /* Bo tròn góc */
+    box-shadow: 0 6px 20px var(--shadow-light); /* Đổ bóng mạnh hơn */
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -55,6 +39,7 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 700;
 }
 
+/* --- THANH ĐIỀU HƯỚNG (NAV) --- */
 nav.navbar {
     background-color: var(--white);
     border-bottom: 1px solid var(--border-color);
@@ -63,11 +48,11 @@ nav.navbar {
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 2px 8px var(--shadow-light);
-    min-height: 70px; 
+    min-height: 70px; /* Tăng chiều cao nav */
 }
 
 nav.navbar .nav-brand {
-    font-size: 1.6rem; 
+    font-size: 1.6rem; /* To hơn 1 chút */
     font-weight: 700;
     color: var(--primary-color);
     text-decoration: none;
@@ -77,7 +62,7 @@ nav.navbar .nav-brand {
 }
 
 .nav-brand img {
-    height: 45px; 
+    height: 45px; /* Chiều cao logo */
     margin-right: 12px;
 }
 
@@ -86,18 +71,18 @@ nav.navbar .nav-links {
     margin: 0;
     padding: 0;
     display: flex;
-    gap: 25px; 
+    gap: 25px; /* Khoảng cách giữa các link */
 }
 
 nav.navbar .nav-links li {
-    margin-left: 0; 
+    margin-left: 0; /* Đặt lại margin-left về 0 */
 }
 
 nav.navbar .nav-links a {
     text-decoration: none;
     color: var(--light-text-color);
     font-weight: 600;
-    padding: 25px 0; 
+    padding: 25px 0; /* Tăng padding */
     display: block;
     border-bottom: 3px solid transparent;
     transition: all 0.3s ease;
@@ -124,15 +109,16 @@ nav.navbar .nav-links a.logout-link {
     transition: background-color 0.3s ease, transform 0.2s ease;
 }
 nav.navbar .nav-links a.logout-link:hover {
-    background-color: #FF4757; 
-    transform: translateY(-2px); 
+    background-color: #FF4757; /* Đỏ đậm hơn */
+    transform: translateY(-2px); /* Hiệu ứng nhấc nhẹ */
 }
 
+/* --- FORM ĐĂNG NHẬP / ĐĂNG KÝ --- */
 .view.active {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 90vh; 
+    min-height: 90vh; /* Tăng chiều cao để căn giữa tốt hơn */
     padding: 20px;
     box-sizing: border-box;
 }
@@ -196,23 +182,24 @@ nav.navbar .nav-links a.logout-link:hover {
     cursor: not-allowed;
 }
 
+/* Nút Submit trong Form Login/Register */
 .form-container button[type="submit"] {
-    width: 100%; 
-    padding: 14px; 
-    background-color: var(--primary-color); 
-    color: var(--white); 
-    border: none; 
-    border-radius: 8px; 
-    cursor: pointer; 
+    width: 100%;
+    padding: 14px;
+    background-color: var(--primary-color);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
     font-size: 1.1rem;
-    font-weight: 700; 
-    transition: background-color 0.3s ease, transform 0.2s ease; 
-    box-shadow: 0 4px 10px rgba(74, 144, 226, 0.3); 
+    font-weight: 700;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 10px rgba(74, 144, 226, 0.3);
 }
 
 .form-container button[type="submit"]:hover {
-    background-color: var(--primary-dark); 
-    transform: translateY(-2px); 
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
 }
 
 .form-container p {
@@ -231,10 +218,11 @@ nav.navbar .nav-links a.logout-link:hover {
     text-decoration: underline;
 }
 
+/* --- Form Quản lý (CRUD) trong Container --- */
 .form-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
-    gap: 20px; /*form ql*/
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Cột rộng hơn */
+    gap: 20px; /* Tăng khoảng cách */
     margin-bottom: 2rem;
 }
 
@@ -243,18 +231,20 @@ nav.navbar .nav-links a.logout-link:hover {
     flex-direction: column;
 }
 .form-group label {
-    margin-bottom: 8px; 
+    margin-bottom: 8px; /* Tăng khoảng cách */
     font-weight: 600;
     color: var(--text-color);
     font-size: 0.95rem;
 }
 
+/* Căn lề lại cho form trong container */
 .form-container .form-group input,
 .form-container .form-group textarea,
 .form-container .form-group select {
-    margin-bottom: 0; 
+    margin-bottom: 0; /* Bỏ margin-bottom ở đây */
 }
 
+/* Thêm lại margin cho form-group để giữ khoảng cách */
 .form-container .form-group {
     margin-bottom: 1.5rem;
 }
@@ -266,6 +256,7 @@ nav.navbar .nav-links a.logout-link:hover {
     margin-top: 5px;
 }
 
+/* --- NÚT HỦY (Cancel) --- */
 .btn-cancel {
     display: block;
     width: 100%;
@@ -289,6 +280,7 @@ nav.navbar .nav-links a.logout-link:hover {
 }
 
 
+/* --- THÔNG BÁO (Message) --- */
 .message {
     padding: 18px;
     margin-bottom: 25px;
@@ -299,32 +291,34 @@ nav.navbar .nav-links a.logout-link:hover {
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 .message.success {
-    background-color: #e6ffed; 
+    background-color: #e6ffed; /* Xanh lá nhạt hơn */
     color: #28a745;
     border: 1px solid #a3e6bb;
 }
 .message.error {
-    background-color: #ffe6e6; 
+    background-color: #ffe6e6; /* Đỏ nhạt hơn */
     color: #dc3545;
     border: 1px solid #e6b3b3;
 }
 .message.info {
-    background-color: #e6f7ff;
+    background-color: #e6f7ff; /* Xanh dương nhạt hơn */
     color: #17a2b8;
     border: 1px solid #a3d9eb;
 }
 
+/* --- BẢNG (Table) --- */
 .table-container {
     background: var(--white);
     border-radius: 12px;
     box-shadow: 0 6px 20px var(--shadow-light);
     overflow-x: auto;
-    margin-top: 2rem; 
+    margin-top: 2rem; /* Khoảng cách từ form phía trên */
+}
 
 table {
     width: 100%;
-    border-collapse: separate; 
-    border-spacing: 0; 
+    border-collapse: separate; /* Thay đổi thành separate */
+    border-spacing: 0; /* Loại bỏ khoảng cách */
 }
 
 table th, table td {
@@ -354,6 +348,7 @@ table tbody tr:hover {
     background-color: var(--background-dark);
 }
 
+/* --- NÚT TRONG BẢNG (MỚI) --- */
 .table-actions {
     display: flex;
     gap: 10px;
@@ -385,6 +380,7 @@ table tbody tr:hover {
     box-shadow: 0 2px 6px rgba(245, 92, 92, 0.3);
 }
 
+/* --- THANH TÌM KIẾM --- */
 .search-bar {
     display: flex;
     gap: 10px;
@@ -429,6 +425,7 @@ table tbody tr:hover {
 }
 
 
+/* --- RESPONSIVE DESIGN (Nếu cần cho màn hình nhỏ) --- */
 @media (max-width: 768px) {
     nav.navbar {
         flex-direction: column;
@@ -455,8 +452,11 @@ table tbody tr:hover {
     }
 }
 
+/* --- CSS HÌNH NỀN MỚI --- */
 .auth-background {
+    /* 1. Tải hình nền bạn đã lưu (background.jpg) */
     background-image: 
+        /* 2. Thêm một lớp phủ màu đen mờ (để chữ nổi bật hơn) */
         linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
         url('background.jpg');
     
@@ -464,9 +464,11 @@ table tbody tr:hover {
     background-position: center center;
     background-repeat: no-repeat;
     
+    /* Ghi đè chiều cao để nó full màn hình */
     min-height: 100vh !important; 
 }
 
+/* Làm cho form đăng nhập/đăng ký hơi trong suốt */
 .auth-background .form-container {
     background-color: rgba(255, 255, 255, 0.95);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); /* Đổ bóng mạnh hơn */
