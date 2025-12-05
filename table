@@ -25,7 +25,14 @@ CREATE TABLE IF NOT EXISTS shoes (
     image VARCHAR(255) DEFAULT 'no-image.png', -- Cột ảnh (Mới thêm)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
+CREATE TABLE IF NOT EXISTS sales (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,          -- Ai là người bán đơn này
+    product_name VARCHAR(100),     -- Tên giày
+    quantity INT,                  -- Số lượng bán
+    total_price DECIMAL(15, 0),    -- Tổng tiền đơn hàng
+    sale_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 -- 4. (Tùy chọn) Thêm sẵn 1 tài khoản Admin mẫu
 -- Mật khẩu là: 123456 (đã được mã hóa)
 INSERT INTO users (username, password, email, role, dob, location) 
