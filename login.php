@@ -2,9 +2,9 @@
 require_once 'db.php';
 $message = '';
 
-// Auto-redirect if already logged in
+// 1. SỬA CHỖ NÀY: Nếu đã đăng nhập rồi thì tự nhảy vào POS luôn
 if (isset($_SESSION['user_id'])) {
-    header("Location: index.php");
+    header("Location: pos.php"); // <-- Đã sửa thành pos.php
     exit;
 }
 
@@ -14,9 +14,9 @@ if (isset($_GET['registered'])) {
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $conn->real_escape_string($_POST['username']);
-    $password = $_POST['password']; // Password entered by user
+    $password = $_POST['password']; 
 
-    // Fetch user info from DB
+    // Lấy thông tin user
     $stmt = $conn->prepare("SELECT id, username, password, role FROM users WHERE username = ?");
     $stmt->bind_param("s", $username);
     $stmt->execute();
@@ -25,14 +25,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($result->num_rows == 1) {
         $user = $result->fetch_assoc();
         
-        // SECURITY: Use password_verify for secure password comparison
         if (password_verify($password, $user['password'])) {
-            // Login successful
+            // Đăng nhập thành công
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['role'] = $user['role'];
             
-            header("Location: index.php"); // Redirect to home page
+            // 2. SỬA CHỖ NÀY: Chuyển hướng vào trang POS sau khi đăng nhập thành công
+            header("Location: pos.php"); // <-- Đã sửa thành pos.php
             exit;
         } else {
             $message = "Invalid username or password.";
@@ -50,13 +50,12 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <title>Login</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
 </head>
 <body>
     <div id="login-view" class="view active auth-background">
         <div class="form-container">
             <img src="logo.png" alt="Logo" class="logo">
-
             <h2>Login</h2>
             
             <?php if(!empty($message)): ?>
@@ -68,7 +67,7 @@ $conn->close();
             <form action="login.php" method="POST">
                 <input type="text" name="username" placeholder="Username" required>
                 <input type="password" name="password" placeholder="Password" required>
-                <button type="submit">Login</button>
+                <button type="submit">Login to POS</button>
             </form>
             <p>Don't have an account? <a href="register.php">Register now</a></p>
         </div>
