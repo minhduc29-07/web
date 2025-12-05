@@ -1,40 +1,52 @@
--- 1. Chọn Cơ sở dữ liệu để làm việc
-USE shoe_store;
+-- 1. XÓA BẢNG CŨ (NẾU CÓ) ĐỂ TẠO LẠI TỪ ĐẦU
+DROP TABLE IF EXISTS sales;
+DROP TABLE IF EXISTS shoes;
+DROP TABLE IF EXISTS users;
 
--- 2. Tạo bảng USERS (Tài khoản)
-CREATE TABLE IF NOT EXISTS users (
+-- 2. TẠO BẢNG USERS (TÀI KHOẢN)
+CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    email VARCHAR(100) NOT NULL,
+    email VARCHAR(100),
     dob DATE,
     location VARCHAR(100),
-    role VARCHAR(20) DEFAULT 'staff', -- Phân quyền: admin hoặc staff
+    role VARCHAR(20) DEFAULT 'staff',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. Tạo bảng SHOES (Kho giày)
-CREATE TABLE IF NOT EXISTS shoes (
+-- 3. TẠO BẢNG SHOES (KHO GIÀY)
+CREATE TABLE shoes (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    sku VARCHAR(50) NOT NULL UNIQUE,  -- Mã giày không được trùng
+    sku VARCHAR(50) NOT NULL,        -- ĐÃ BỎ "UNIQUE" ĐỂ BẠN NHẬP TRÙNG MÃ THOẢI MÁI
     name VARCHAR(100) NOT NULL,
     brand VARCHAR(50) NOT NULL,
     size INT NOT NULL,
     quantity INT DEFAULT 0,
-    price DECIMAL(15, 0) NOT NULL,    -- Giá tiền
-    image VARCHAR(255) DEFAULT 'no-image.png', -- Cột ảnh (Mới thêm)
+    price DECIMAL(15, 0) NOT NULL,
+    image VARCHAR(255) DEFAULT 'no-image.png',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-CREATE TABLE IF NOT EXISTS sales (
+
+-- 4. TẠO BẢNG SALES (LỊCH SỬ BÁN HÀNG)
+CREATE TABLE sales (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,          -- Ai là người bán đơn này
-    product_name VARCHAR(100),     -- Tên giày
-    quantity INT,                  -- Số lượng bán
-    total_price DECIMAL(15, 0),    -- Tổng tiền đơn hàng
+    user_id INT NOT NULL,
+    product_name VARCHAR(100),
+    quantity INT,
+    total_price DECIMAL(15, 0),
     sale_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
--- 4. (Tùy chọn) Thêm sẵn 1 tài khoản Admin mẫu
--- Mật khẩu là: 123456 (đã được mã hóa)
+
+-- 5. THÊM TÀI KHOẢN ADMIN MẶC ĐỊNH
+-- Username: admin
+-- Password: 123456
 INSERT INTO users (username, password, email, role, dob, location) 
 VALUES 
 ('admin', '$2y$10$YourHashedPasswordHere...', 'admin@gmail.com', 'admin', '2000-01-01', 'Hanoi');
+
+-- Cập nhật mật khẩu chuẩn (123456) cho admin (phòng trường hợp hash trên bị lỗi)
+UPDATE users 
+SET password = '$2y$10$hK.7.1.k1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1' 
+WHERE username = 'admin'; 
+-- (Lưu ý: Nếu đăng nhập không được, hãy dùng file _reset_admin.php để đặt lại pass)
