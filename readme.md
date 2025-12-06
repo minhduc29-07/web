@@ -1,13 +1,12 @@
-```mermaid
 erDiagram
-    %% Bảng ROLES
+    %% Bảng ROLES (Giữ nguyên)
     ROLES {
         int id PK
         varchar name
         varchar description
     }
     
-    %% Bảng USERS
+    %% Bảng USERS (Giữ nguyên)
     USERS {
         int id PK
         varchar username
@@ -20,7 +19,7 @@ erDiagram
         tinyint is_active
     }
     
-    %% Bảng SESSIONS
+    %% Bảng SESSIONS (Giữ nguyên)
     SESSIONS {
         int id PK
         int user_id FK
@@ -31,7 +30,7 @@ erDiagram
         varchar user_agent
     }
     
-    %% Bảng PASSWORD_RESETS
+    %% Bảng PASSWORD_RESETS (Giữ nguyên)
     PASSWORD_RESETS {
         int id PK
         int user_id FK
@@ -41,7 +40,7 @@ erDiagram
         tinyint used
     }
     
-    %% Bảng SHOES (Của dự án bạn)
+    %% Bảng SHOES (Cập nhật: Thêm cost_price)
     SHOES {
         int id PK
         varchar sku
@@ -50,7 +49,19 @@ erDiagram
         int size
         int quantity
         decimal price
+        decimal cost_price  
         int created_by_user_id FK
+    }
+
+    %% Bảng SALES (MỚI: Lịch sử giao dịch)
+    SALES {
+        int id PK
+        int user_id FK
+        varchar product_name
+        int quantity
+        decimal total_price
+        decimal unit_cost_price 
+        datetime sale_date
     }
 
     %% Quan hệ
@@ -58,4 +69,4 @@ erDiagram
     USERS ||--o{ SESSIONS : "has"
     USERS ||--o{ PASSWORD_RESETS : "has"
     USERS ||--o{ SHOES : "manages"
-```
+    USERS ||--o{ SALES : "transacts"
