@@ -2,16 +2,24 @@
 require_once 'db.php';
 check_login();
 
-// --- 1. TÍNH DOANH THU HÔM NAY ---
+// --- 1. TÍNH DOANH THU, GIÁ VỐN & LỢI NHUẬN HÔM NAY ---
 $today = date('Y-m-d');
-$sql_today = "SELECT SUM(total_price) as today_revenue FROM sales WHERE DATE(sale_date) = '$today'";
+// CẬP NHẬT: Thêm tính tổng unit_cost_price
+$sql_today = "SELECT 
+                SUM(total_price) as today_revenue,
+                SUM(unit_cost_price * quantity) as today_cogs 
+              FROM sales 
+              WHERE DATE(sale_date) = '$today'";
 $result_today = $conn->query($sql_today)->fetch_assoc();
 $revenue_today = $result_today['today_revenue'] ?? 0;
+$cogs_today = $result_today['today_cogs'] ?? 0; // Giá vốn hàng bán (COGS)
+$profit_today = $revenue_today - $cogs_today; // Lợi nhuận gộp hôm nay
 
-// --- 2. TÍNH DOANH THU THEO NGÀY ---
+// --- 2. TÍNH DOANH THU & LỢI NHUẬN THEO NGÀY ---
 $sql_daily = "SELECT 
                 DATE(sale_date) as report_date, 
                 SUM(total_price) as daily_revenue, 
+                SUM(unit_cost_price * quantity) as daily_cogs,  /* THÊM DAILY COGS */
                 COUNT(*) as total_orders,
                 SUM(quantity) as total_items
               FROM sales 
@@ -38,6 +46,11 @@ $result_daily = $conn->query($sql_daily);
             box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
             text-align: center;
         }
+        /* CẬP NHẬT MÀU SẮC THẺ THỐNG KÊ HÔM NAY */
+        .summary-card.revenue { background: linear-gradient(135deg, #4A90E2, #357ABD); }
+        .summary-card.profit { background: linear-gradient(135deg, #28a745, #218838); }
+        .summary-card.cost { background: linear-gradient(135deg, #F7B84B, #d1973b); }
+
         .summary-card h3 { margin: 0; font-size: 1rem; opacity: 0.9; text-transform: uppercase; }
         .summary-card .money { font-size: 2.5rem; font-weight: bold; margin-top: 10px; }
         
@@ -69,28 +82,43 @@ $result_daily = $conn->query($sql_daily);
     <div class="container">
         
         <div class="report-header">
-            <div class="summary-card">
+            
+            <div class="summary-card revenue">
                 <h3><i class="fas fa-calendar-day"></i> Today's Revenue</h3>
                 <div class="money"><?php echo number_format($revenue_today); ?> ₫</div>
                 <small><?php echo date("d/m/Y"); ?></small>
             </div>
+            
+            <div class="summary-card cost">
+                <h3><i class="fas fa-money-bill-wave"></i> Today's Cost</h3>
+                <div class="money"><?php echo number_format($cogs_today); ?> ₫</div>
+                <small>Cost of Goods Sold (COGS)</small>
+            </div>
+
+            <div class="summary-card profit">
+                <h3><i class="fas fa-hand-holding-usd"></i> Today's Gross Profit</h3>
+                <div class="money"><?php echo number_format($profit_today); ?> ₫</div>
+                <small>Revenue - Cost</small>
+            </div>
         </div>
 
-        <h3><i class="fas fa-chart-line"></i> Daily Revenue History</h3>
+        <h3><i class="fas fa-chart-line"></i> Daily Performance History</h3>
         
         <div class="table-container">
             <table class="report-table">
                 <thead>
                     <tr>
                         <th>Date (Click to view)</th>
-                        <th>Total Orders</th>
+                        <th>Orders</th>
                         <th>Items Sold</th>
                         <th>Total Revenue</th>
-                    </tr>
+                        <th>Gross Profit</th> </tr>
                 </thead>
                 <tbody>
                     <?php if ($result_daily->num_rows > 0): ?>
-                        <?php while($row = $result_daily->fetch_assoc()): ?>
+                        <?php while($row = $result_daily->fetch_assoc()): 
+                            $daily_profit = $row['daily_revenue'] - $row['daily_cogs'];
+                        ?>
                             <tr>
                                 <td>
                                     <a href="sales_history.php?date=<?php echo $row['report_date']; ?>" class="btn-view-detail">
@@ -102,13 +130,13 @@ $result_daily = $conn->query($sql_daily);
                                 </td>
                                 <td><?php echo $row['total_orders']; ?> orders</td>
                                 <td><?php echo $row['total_items']; ?> pairs</td>
+                                <td><?php echo number_format($row['daily_revenue']); ?> ₫</td>
                                 <td class="high-revenue">
-                                    <?php echo number_format($row['daily_revenue']); ?> ₫
-                                </td>
+                                    <?php echo number_format($daily_profit); ?> ₫ </td>
                             </tr>
                         <?php endwhile; ?>
                     <?php else: ?>
-                        <tr><td colspan="4" style="text-align:center">No sales data recorded yet.</td></tr>
+                        <tr><td colspan="5" style="text-align:center">No sales data recorded yet.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>
