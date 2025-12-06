@@ -2,57 +2,60 @@
 require_once 'db.php';
 check_login();
 
-// --- LOGIC PHP GIỎ HÀNG ---
-if (!isset($_SESSION['cart'])) { $_SESSION['cart'] = []; }
-$message = ''; $message_type = '';
+if (!isset($_SESSION['cart'])) {
+    $_SESSION['cart'] = [];
+}
 
+$message = '';
+$message_type = '';
+
+// --- XỬ LÝ: THÊM VÀO GIỎ (CẬP NHẬT: NHẬN SỐ LƯỢNG TÙY CHỌN) ---
 if (isset($_POST['add_to_cart'])) {
-    $id = (int)$_POST['product_id']; 
-    $buy_qty = (int)$_POST['buy_qty'];
+    $id = (int)$_POST['product_id'];
+    $name = $_POST['name'];
+    $price = (float)$_POST['price'];
+    $cost_price = (float)$_POST['cost_price']; // Lấy giá vốn từ form ẩn
+    $max_qty = (int)$_POST['max_qty'];
+    $buy_qty = (int)$_POST['buy_qty']; // Lấy số lượng người dùng nhập
 
-    if ($id == 0) {
-        $message = "Please select a size!"; $message_type = "error";
-    } elseif ($buy_qty <= 0) {
-        $message = "Quantity > 0"; $message_type = "error";
+    if ($buy_qty <= 0) {
+        $message = "Quantity must be at least 1.";
+        $message_type = "error";
     } else {
-        $stmt = $conn->prepare("SELECT * FROM shoes WHERE id = ?");
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        $product = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
-
-        if ($product) {
-            $name_with_size = $product['name'] . " (Size: " . $product['size'] . ")";
-            $max_qty = $product['quantity'];
-            
-            $found = false;
-            foreach ($_SESSION['cart'] as &$item) {
-                if ($item['id'] == $id) {
-                    if (($item['qty'] + $buy_qty) <= $max_qty) {
-                        $item['qty'] += $buy_qty;
-                    } else {
-                        $message = "Stock limit reached for Size " . $product['size']; $message_type = "error";
-                    }
-                    $found = true; break;
-                }
-            }
-            if (!$found) {
-                if ($buy_qty <= $max_qty) {
-                    $_SESSION['cart'][] = [
-                        'id'=>$id, 
-                        'name'=>$name_with_size,
-                        'price'=>$product['price'], 
-                        'qty'=>$buy_qty, 
-                        'max_qty'=>$max_qty
-                    ];
+        $found = false;
+        foreach ($_SESSION['cart'] as &$item) {
+            if ($item['id'] == $id) {
+                // Kiểm tra: Số trong giỏ + Số muốn mua thêm có vượt quá kho không?
+                if (($item['qty'] + $buy_qty) <= $max_qty) {
+                    $item['qty'] += $buy_qty;
                 } else {
-                    $message = "Not enough stock!"; $message_type = "error";
+                    $message = "Cannot add $buy_qty more. Stock limit reached!";
+                    $message_type = "error";
                 }
+                $found = true;
+                break;
+            }
+        }
+        
+        if (!$found) {
+            if ($buy_qty <= $max_qty) {
+                $_SESSION['cart'][] = [
+                    'id' => $id,
+                    'name' => $name,
+                    'price' => $price,
+                    'cost_price' => $cost_price, // Lưu giá vốn vào session
+                    'qty' => $buy_qty,
+                    'max_qty' => $max_qty
+                ];
+            } else {
+                $message = "Not enough stock!";
+                $message_type = "error";
             }
         }
     }
 }
 
+// --- XỬ LÝ: XÓA GIỎ ---
 if (isset($_GET['remove'])) {
     $index = $_GET['remove'];
     if (isset($_SESSION['cart'][$index])) {
@@ -61,47 +64,46 @@ if (isset($_GET['remove'])) {
     }
 }
 
+// --- XỬ LÝ: THANH TOÁN ---
 if (isset($_POST['checkout'])) {
     if (!empty($_SESSION['cart'])) {
         $user_id = $_SESSION['user_id'];
         $conn->begin_transaction();
+
         try {
             foreach ($_SESSION['cart'] as $item) {
-                $pid = $item['id']; $qty = $item['qty']; $total = $item['price'] * $qty; $pname = $item['name'];
+                $pid = $item['id'];
+                $qty = $item['qty'];
+                $total = $item['price'] * $qty;
+                $pname = $item['name'];
+                $unit_cost = $item['cost_price']; // Lấy giá vốn đơn vị
+
                 $conn->query("UPDATE shoes SET quantity = quantity - $qty WHERE id = $pid");
-                $stmt = $conn->prepare("INSERT INTO sales (user_id, product_name, quantity, total_price) VALUES (?, ?, ?, ?)");
-                $stmt->bind_param("isid", $user_id, $pname, $qty, $total);
+                
+                // CẬP NHẬT: Thêm cột unit_cost_price vào câu lệnh INSERT
+                $stmt = $conn->prepare("INSERT INTO sales (user_id, product_name, quantity, total_price, unit_cost_price) VALUES (?, ?, ?, ?, ?)");
+                $stmt->bind_param("isidd", $user_id, $pname, $qty, $total, $unit_cost);
                 $stmt->execute();
             }
+
             $conn->commit();
             $_SESSION['cart'] = [];
-            $message = "Payment Successful!"; $message_type = "success";
+            $message = "Sale recorded successfully!";
+            $message_type = "success";
+
         } catch (Exception $e) {
             $conn->rollback();
-            $message = "Error: " . $e->getMessage(); $message_type = "error";
+            $message = "Error: " . $e->getMessage();
+            $message_type = "error";
         }
-    } else { $message = "Cart is empty!"; $message_type = "error"; }
-}
-
-// --- LOGIC GOM NHÓM SẢN PHẨM ---
-$raw_data = $conn->query("SELECT * FROM shoes WHERE quantity > 0 ORDER BY name ASC, size ASC");
-$grouped_products = [];
-
-while($row = $raw_data->fetch_assoc()) {
-    $name = $row['name'];
-    if (!isset($grouped_products[$name])) {
-        $grouped_products[$name] = [
-            'image' => $row['image'],
-            'price' => $row['price'],
-            'variants' => []
-        ];
+    } else {
+        $message = "Cart is empty!";
+        $message_type = "error";
     }
-    $grouped_products[$name]['variants'][] = [
-        'id' => $row['id'],
-        'size' => $row['size'],
-        'quantity' => $row['quantity']
-    ];
 }
+
+// CẬP NHẬT: Lấy thêm cột cost_price
+$products = $conn->query("SELECT *, cost_price FROM shoes WHERE quantity > 0 ORDER BY name ASC");
 ?>
 
 <!DOCTYPE html>
@@ -109,184 +111,106 @@ while($row = $raw_data->fetch_assoc()) {
 <head>
     <meta charset="UTF-8">
     <title>POS System</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="style.css?v=<?php echo time(); ?>">
     <style>
-        .size-select {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            background: #f9f9f9;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        /* CSS cho Thanh Tìm Kiếm Mới */
-        .search-container {
-            margin-bottom: 20px;
-            position: relative;
-        }
-        .search-input {
-            width: 100%;
-            padding: 12px 15px 12px 45px; /* Padding trái chừa chỗ cho icon */
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-            box-sizing: border-box; /* Quan trọng để không bị vỡ layout */
-        }
-        .search-input:focus {
-            border-color: var(--primary-color);
-            outline: none;
-        }
-        .search-icon {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #999;
-            font-size: 1.1rem;
-        }
+        .pos-container { display: flex; gap: 20px; }
+        .product-list { flex: 2; display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+        .cart-panel { flex: 1; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); height: fit-content; }
+        
+        .pos-card { background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 10px; text-align: center; }
+        .pos-card img { width: 80px; height: 80px; object-fit: cover; margin-bottom: 10px; }
+        .pos-card h4 { font-size: 0.9rem; margin: 5px 0; height: 40px; overflow: hidden; }
+        
+        /* Style cho ô nhập số lượng */
+        .qty-input-group { display: flex; justify-content: center; gap: 5px; margin-top: 5px; }
+        .qty-input-group input { width: 50px; padding: 5px; text-align: center; border: 1px solid #ddd; border-radius: 4px; }
+        .btn-add { background: var(--primary-color); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-add:hover { background: var(--primary-dark); }
+        
+        .cart-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 10px 0; }
+        .cart-total { margin-top: 20px; font-size: 1.2rem; font-weight: bold; text-align: right; color: var(--primary-color); }
+        .btn-checkout { width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 8px; font-size: 1.1rem; margin-top: 20px; cursor: pointer; }
+        
+        /* CSS MỚI cho lợi nhuận gộp */
+        .cart-profit { color: #28a745; font-size: 0.8rem; } 
     </style>
 </head>
-<body style="height: 100vh; overflow: hidden;">
-
+<body>
     <?php require_once 'navigation.php'; ?>
 
-    <div class="container" style="max-width: 100%; margin: 10px auto; height: 100%;">
+    <div class="container">
+        <h2>Sales Counter (POS)</h2>
         <?php if ($message): ?>
-            <div class="message <?php echo $message_type; ?>" style="margin-bottom: 10px;"><?php echo $message; ?></div>
+            <div class="message <?php echo $message_type; ?>"><?php echo $message; ?></div>
         <?php endif; ?>
 
-        <div class="pos-layout">
-            
-            <div class="pos-products-area">
-                
-                <div class="search-container">
-                    <i class="fas fa-search search-icon"></i>
-                    <input type="text" id="posSearch" class="search-input" placeholder="Search product name..." autocomplete="off">
-                </div>
-
-                <div class="pos-grid" id="productGrid">
-                    <?php foreach($grouped_products as $prod_name => $prod_data): ?>
-                        <div class="pos-item" data-name="<?php echo strtolower(html_safe($prod_name)); ?>">
-                            <form method="POST" style="height: 100%; display: flex; flex-direction: column;">
-                                
-                                <?php 
-                                    $img = !empty($prod_data['image']) ? "uploads/".$prod_data['image'] : "uploads/no-image.png";
-                                    if (!file_exists($img)) $img = "uploads/no-image.png";
-                                ?>
-                                <img src="<?php echo $img; ?>" alt="Product">
-                                
-                                <div class="pos-item-content">
-                                    <h4><?php echo html_safe($prod_name); ?></h4>
-                                    <div class="price"><?php echo number_format($prod_data['price']); ?> ₫</div>
-                                    
-                                    <label style="font-size: 0.8rem; color: #666;">Select Size:</label>
-                                    <select name="product_id" class="size-select" required>
-                                        <option value="0">-- Choose Size --</option>
-                                        <?php foreach($prod_data['variants'] as $variant): ?>
-                                            <option value="<?php echo $variant['id']; ?>">
-                                                Size <?php echo $variant['size']; ?> (Stock: <?php echo $variant['quantity']; ?>)
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    
-                                    <div class="qty-control">
-                                        <input type="number" name="buy_qty" value="1" min="1" style="width: 60px;">
-                                        <button type="submit" name="add_to_cart" class="btn-add-pos">
-                                            <i class="fas fa-cart-plus"></i> Add
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-                
-                <div id="noResults" style="display:none; text-align:center; padding: 20px; color: #888;">
-                    <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                    <p>No products found.</p>
-                </div>
+        <div class="pos-container">
+            <div class="product-list">
+                <?php while($row = $products->fetch_assoc()): ?>
+                    <div class="pos-card">
+                        <form method="POST">
+                            <input type="hidden" name="product_id" value="<?php echo $row['id']; ?>">
+                            <input type="hidden" name="name" value="<?php echo $row['name']; ?>">
+                            <input type="hidden" name="price" value="<?php echo $row['price']; ?>">
+                            <input type="hidden" name="cost_price" value="<?php echo $row['cost_price']; ?>"> <input type="hidden" name="max_qty" value="<?php echo $row['quantity']; ?>">
+                            
+                            <?php 
+                                $img = !empty($row['image']) ? "uploads/".$row['image'] : "uploads/no-image.png";
+                                if (!file_exists($img)) $img = "uploads/no-image.png";
+                            ?>
+                            <img src="<?php echo $img; ?>" alt="Shoe">
+                            <h4><?php echo html_safe($row['name']); ?></h4>
+                            <div style="font-weight:bold; color:#4A90E2;"><?php echo number_format($row['price']); ?></div>
+                            <small>Stock: <?php echo $row['quantity']; ?></small>
+                            
+                            <div class="qty-input-group">
+                                <input type="number" name="buy_qty" value="1" min="1" max="<?php echo $row['quantity']; ?>">
+                                <button type="submit" name="add_to_cart" class="btn-add">Add</button>
+                            </div>
+                        </form>
+                    </div>
+                <?php endwhile; ?>
             </div>
 
-            <div class="pos-cart-area">
-                <div class="cart-header">
-                    <h3 style="margin:0;"><i class="fas fa-shopping-cart"></i> Current Order</h3>
-                </div>
-
-                <div class="cart-body">
-                    <?php if (empty($_SESSION['cart'])): ?>
-                        <div style="text-align: center; color: #999; margin-top: 50px;">
-                            <i class="fas fa-shopping-basket" style="font-size: 3rem; margin-bottom: 10px; opacity: 0.5;"></i>
-                            <p>Cart is empty</p>
-                        </div>
-                    <?php else: ?>
+            <div class="cart-panel">
+                <h3>Current Order</h3>
+                <?php if (empty($_SESSION['cart'])): ?>
+                    <p style="color: #999; text-align: center;">Cart is empty.</p>
+                <?php else: ?>
+                    <div class="cart-items">
                         <?php 
                         $grand_total = 0;
+                        $total_cost = 0;
+                        $total_profit = 0;
+
                         foreach ($_SESSION['cart'] as $index => $item): 
                             $line_total = $item['price'] * $item['qty'];
+                            $line_cost = $item['cost_price'] * $item['qty']; // Tính giá vốn theo dòng
+                            $line_profit = $line_total - $line_cost; // Tính lợi nhuận theo dòng
+
                             $grand_total += $line_total;
+                            $total_profit += $line_profit; // Cộng dồn lợi nhuận
+
                         ?>
-                            <div class="cart-row">
-                                <div class="cart-item-info">
-                                    <b><?php echo html_safe($item['name']); ?></b>
-                                    <span><?php echo number_format($item['price']); ?> x <strong><?php echo $item['qty']; ?></strong></span>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <span style="font-weight: 600;"><?php echo number_format($line_total); ?></span>
-                                    <a href="pos.php?remove=<?php echo $index; ?>" class="btn-remove-item">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </a>
+                            <div class="cart-item">
+                                <div>
+                                    <b><?php echo html_safe($item['name']); ?></b><br>
+                                    <small><?php echo number_format($item['price']); ?> x <strong><?php echo $item['qty']; ?></strong></small>
+                                    <div class="cart-profit">Lãi gộp: <?php echo number_format($line_profit); ?></div> </div>
+                                <div>
+                                    <?php echo number_format($line_total); ?>
+                                    <a href="pos.php?remove=<?php echo $index; ?>" style="color:red; margin-left:10px; text-decoration:none;">X</a>
                                 </div>
                             </div>
                         <?php endforeach; ?>
-                    <?php endif; ?>
-                </div>
-
-                <div class="cart-footer">
-                    <div class="total-row">
-                        <span>Total:</span>
-                        <span style="color: var(--primary-color);"><?php echo number_format($grand_total ?? 0); ?> VND</span>
                     </div>
-                    <?php if (!empty($_SESSION['cart'])): ?>
+                    <div class="cart-total" style="color:#28a745;">Gross Profit: <?php echo number_format($total_profit); ?> VND</div> <div class="cart-total">Total: <?php echo number_format($grand_total); ?> VND</div>
                     <form method="POST">
-                        <button type="submit" name="checkout" class="btn-pay" onclick="return confirm('Confirm payment?');">
-                            <i class="fas fa-money-bill-wave"></i> PAY NOW
-                        </button>
+                        <button type="submit" name="checkout" class="btn-checkout" onclick="return confirm('Confirm payment?');">PAY & SAVE</button>
                     </form>
-                    <?php endif; ?>
-                </div>
+                <?php endif; ?>
             </div>
-
         </div>
     </div>
-
-    <script>
-        document.getElementById('posSearch').addEventListener('keyup', function() {
-            let filter = this.value.toLowerCase();
-            let items = document.querySelectorAll('.pos-item');
-            let hasResults = false;
-
-            items.forEach(function(item) {
-                let name = item.getAttribute('data-name');
-                if (name.includes(filter)) {
-                    item.style.display = ""; // Hiện
-                    hasResults = true;
-                } else {
-                    item.style.display = "none"; // Ẩn
-                }
-            });
-
-            // Hiển thị thông báo nếu không có kết quả
-            let noResDiv = document.getElementById('noResults');
-            if (!hasResults) {
-                noResDiv.style.display = "block";
-            } else {
-                noResDiv.style.display = "none";
-            }
-        });
-    </script>
 </body>
 </html>
