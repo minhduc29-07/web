@@ -1,12 +1,12 @@
 erDiagram
-    %% Bảng ROLES (Giữ nguyên)
+    %% Bảng ROLES
     ROLES {
         int id PK
         varchar name
         varchar description
     }
     
-    %% Bảng USERS (Giữ nguyên)
+    %% Bảng USERS 
     USERS {
         int id PK
         varchar username
@@ -19,7 +19,7 @@ erDiagram
         tinyint is_active
     }
     
-    %% Bảng SESSIONS (Giữ nguyên)
+    %% Bảng SESSIONS
     SESSIONS {
         int id PK
         int user_id FK
@@ -30,7 +30,7 @@ erDiagram
         varchar user_agent
     }
     
-    %% Bảng PASSWORD_RESETS (Giữ nguyên)
+    %% Bảng PASSWORD_RESETS
     PASSWORD_RESETS {
         int id PK
         int user_id FK
