@@ -18,6 +18,7 @@ $edit_brand = '';
 $edit_size = '';
 $edit_quantity = '';
 $edit_price = '';
+$edit_cost_price = ''; // Đã thêm
 $edit_image = ''; // Biến chứa tên ảnh hiện tại khi sửa
 $is_editing = false; 
 
@@ -39,6 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_shoe'])) {
     $size = (int)$_POST['size'];
     $quantity = (int)$_POST['quantity'];
     $price = (float)$_POST['price'];
+    $cost_price = (float)$_POST['cost_price']; // Đã thêm
     $note_id = $conn->real_escape_string($_POST['note_id']); 
 
     // Giữ lại giá trị nhập nếu có lỗi
@@ -48,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_shoe'])) {
     $edit_size = $size;
     $edit_quantity = $quantity;
     $edit_price = $price;
+    $edit_cost_price = $cost_price; // Đã thêm
 
     // --- LOGIC UPLOAD ẢNH ---
     $image_filename = ""; // Tên file ảnh sẽ lưu vào DB
@@ -84,22 +87,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_shoe'])) {
     }
 
     // Nếu không có lỗi upload thì mới lưu vào DB
+    // CẬP NHẬT: Kiểm tra cả cost_price
     if (empty($message)) {
-        if (empty($sku) || empty($name) || empty($brand) || $size <= 0 || $quantity < 0 || $price <= 0) {
-            $message = "Error: Please fill in all fields correctly.";
+        if (empty($sku) || empty($name) || empty($brand) || $size <= 0 || $quantity < 0 || $price <= 0 || $cost_price < 0) {
+            $message = "Error: Please fill in all fields correctly (Price and Cost Price must be positive).";
             $message_type = 'error';
         } else {
             try {
                 if (!empty($note_id)) {
                     // --- UPDATE (SỬA) ---
                     if ($has_new_image) {
-                        // Nếu có ảnh mới -> Cập nhật cả cột image
-                        $stmt = $conn->prepare("UPDATE shoes SET sku = ?, name = ?, brand = ?, size = ?, quantity = ?, price = ?, image = ? WHERE id = ?");
-                        $stmt->bind_param("sssiidsi", $sku, $name, $brand, $size, $quantity, $price, $image_filename, $note_id);
+                        // Dòng 104 (UPDATE CÓ IMAGE): Đảm bảo 8 tham số và 8 biến.
+                        // CÁC CỘT: sku, name, brand, size, quantity, price, cost_price, image
+                        $stmt = $conn->prepare("UPDATE shoes SET sku = ?, name = ?, brand = ?, size = ?, quantity = ?, price = ?, cost_price = ?, image = ? WHERE id = ?");
+                        // 8 ký tự định dạng: s, s, s, i, i, d, d, s.  9 biến (thêm $note_id)
+                        $stmt->bind_param("sssiiddsi", $sku, $name, $brand, $size, $quantity, $price, $cost_price, $image_filename, $note_id); 
                     } else {
-                        // Nếu KHÔNG có ảnh mới -> Giữ nguyên ảnh cũ (không update cột image)
-                        $stmt = $conn->prepare("UPDATE shoes SET sku = ?, name = ?, brand = ?, size = ?, quantity = ?, price = ? WHERE id = ?");
-                        $stmt->bind_param("sssiidi", $sku, $name, $brand, $size, $quantity, $price, $note_id);
+                        // Dòng 109 (UPDATE KHÔNG CÓ IMAGE): Đảm bảo 7 tham số và 7 biến.
+                        // CÁC CỘT: sku, name, brand, size, quantity, price, cost_price
+                        $stmt = $conn->prepare("UPDATE shoes SET sku = ?, name = ?, brand = ?, size = ?, quantity = ?, price = ?, cost_price = ? WHERE id = ?");
+                        // 7 ký tự định dạng: s, s, s, i, i, d, d. 8 biến (thêm $note_id)
+                        $stmt->bind_param("sssiiddi", $sku, $name, $brand, $size, $quantity, $price, $cost_price, $note_id);
                     }
                     
                     $stmt->execute();
@@ -119,9 +127,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_shoe'])) {
                         $image_filename = 'no-image.png'; 
                     }
 
-                    $stmt = $conn->prepare("INSERT INTO shoes (sku, name, brand, size, quantity, price, image) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                    $stmt->bind_param("sssiids", $sku, $name, $brand, $size, $quantity, $price, $image_filename);
-                    
+                    // Dòng 123 (INSERT): Đảm bảo 8 cột.
+                    $stmt = $conn->prepare("INSERT INTO shoes (sku, name, brand, size, quantity, price, cost_price, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                    // Dòng 124 (bind_param): Đảm bảo 8 biến và 8 định dạng.
+                    // s (sku), s (name), s (brand), i (size), i (quantity), d (price), d (cost_price), s (image)
+                    $stmt->bind_param("sssiidds", $sku, $name, $brand, $size, $quantity, $price, $cost_price, $image_filename); 
                     $stmt->execute();
 
                     if ($stmt->affected_rows > 0) {
@@ -129,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_shoe'])) {
                         $message_type = 'success';
                         // Reset form
                         $edit_sku = $edit_name = $edit_brand = '';
-                        $edit_size = $edit_quantity = $edit_price = 0;
+                        $edit_size = $edit_quantity = $edit_price = $edit_cost_price = 0;
                     } else {
                         $message = "Error: Command executed but no rows were added.";
                         $message_type = 'error';
@@ -155,12 +165,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_shoe'])) {
 }
 
 // --- 1. LẤY SỐ LIỆU THỐNG KÊ (DASHBOARD) ---
-// Tính toán các con số để hiển thị trên 4 thẻ bài
+// CẬP NHẬT: Thêm tính toán Tổng giá vốn (total_cost)
 $stats = $conn->query("
     SELECT 
         COUNT(*) as total_products,
         SUM(quantity) as total_stock,
         SUM(quantity * price) as total_value,
+        SUM(quantity * cost_price) as total_cost,
         COUNT(CASE WHEN quantity < 5 THEN 1 END) as low_stock
     FROM shoes
 ")->fetch_assoc();
@@ -184,8 +195,8 @@ if (isset($_GET['delete'])) {
 // --- 4. LẤY DỮ LIỆU ĐỂ SỬA ---
 if (isset($_GET['edit'])) {
     $note_id_to_edit = (int)$_GET['edit'];
-    // Lấy thêm cột image
-    $stmt = $conn->prepare("SELECT sku, name, brand, size, quantity, price, image FROM shoes WHERE id = ?");
+    // CẬP NHẬT: Lấy thêm cột cost_price
+    $stmt = $conn->prepare("SELECT sku, name, brand, size, quantity, price, cost_price, image FROM shoes WHERE id = ?");
     $stmt->bind_param("i", $note_id_to_edit);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -199,6 +210,7 @@ if (isset($_GET['edit'])) {
         $edit_size = $note['size'];
         $edit_quantity = $note['quantity'];
         $edit_price = $note['price'];
+        $edit_cost_price = $note['cost_price']; // Đã thêm
         $edit_image = $note['image']; // Lấy tên ảnh
         $is_editing = true;
     }
@@ -209,7 +221,8 @@ if (isset($_GET['edit'])) {
 $search_query = "";
 $search_term = "";
 
-$sql = "SELECT * FROM shoes";
+// CẬP NHẬT: Thêm cột cost_price vào truy vấn chính
+$sql = "SELECT *, cost_price FROM shoes";
 
 if (isset($_GET['search']) && !empty(trim($_GET['search']))) {
     $search_term = $conn->real_escape_string($_GET['search']);
@@ -274,6 +287,10 @@ $conn->close();
                 <h4>Total Value (VND)</h4>
                 <div class="number"><?php echo number_format($stats['total_value'] ?? 0); ?></div>
             </div>
+            <div class="stat-card purple">
+                <h4>Total Cost (VND)</h4>
+                <div class="number" style="color: #8A2BE2;"><?php echo number_format($stats['total_cost'] ?? 0); ?></div>
+            </div>
             <div class="stat-card red">
                 <h4>Low Stock (< 5)</h4>
                 <div class="number" style="color: #F55C5C;"><?php echo number_format($stats['low_stock'] ?? 0); ?></div>
@@ -337,6 +354,12 @@ $conn->close();
                     </div>
 
                     <div class="form-group">
+                        <label for="cost_price">Cost Price (VND)</label>
+                        <input type="number" id="cost_price" name="cost_price" placeholder="e.g., 2000000" 
+                               value="<?php echo html_safe($edit_cost_price); ?>" required min="0" step="1000">
+                    </div>
+
+                    <div class="form-group">
                         <label for="image">Product Image</label>
                         <input type="file" id="image" name="image" accept="image/*" style="padding: 10px; background: white;">
                         <?php if ($is_editing && !empty($edit_image) && $edit_image != 'no-image.png'): ?>
@@ -375,13 +398,14 @@ $conn->close();
                         <th>Size</th>
                         <th>Quantity</th>
                         <th>Price (VND)</th>
+                        <th>Cost Price (VND)</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($shoes_list)): ?>
                         <tr>
-                            <td colspan="8" style="text-align: center;"> <?php if (!empty($search_term)): ?>
+                            <td colspan="9" style="text-align: center;"> <?php if (!empty($search_term)): ?>
                                     No products found matching "<?php echo html_safe($search_term); ?>".
                                 <?php else: ?>
                                     No products in inventory yet.
@@ -420,6 +444,9 @@ $conn->close();
                                 </td>
                                 
                                 <td><?php echo number_format($shoe['price'], 0, ',', '.'); ?></td>
+                                <td style="color: #8A2BE2;">
+                                    <?php echo number_format($shoe['cost_price'], 0, ',', '.'); ?>
+                                </td>
                                 <td>
                                     <div class="table-actions">
                                         <a href="index.php?edit=<?php echo $shoe['id']; ?>" class="btn-edit">Edit</a>
