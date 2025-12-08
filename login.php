@@ -2,7 +2,6 @@
 require_once 'db.php';
 $message = '';
 
-// 1. SỬA CHỖ NÀY: Nếu đã đăng nhập rồi thì tự nhảy vào POS luôn
 if (isset($_SESSION['user_id'])) {
     header("Location: pos.php"); // <-- Đã sửa thành pos.php
     exit;
