@@ -80,7 +80,6 @@ if (isset($_POST['checkout'])) {
 
                 $conn->query("UPDATE shoes SET quantity = quantity - $qty WHERE id = $pid");
                 
-                // CẬP NHẬT: Thêm cột unit_cost_price vào câu lệnh INSERT
                 $stmt = $conn->prepare("INSERT INTO sales (user_id, product_name, quantity, total_price, unit_cost_price) VALUES (?, ?, ?, ?, ?)");
                 $stmt->bind_param("isidd", $user_id, $pname, $qty, $total, $unit_cost);
                 $stmt->execute();
