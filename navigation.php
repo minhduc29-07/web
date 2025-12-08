@@ -1,5 +1,4 @@
 <?php
-// Lấy tên trang hiện tại để tô màu menu active
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 
