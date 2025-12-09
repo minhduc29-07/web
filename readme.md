@@ -1,3 +1,4 @@
+```mermaid
 erDiagram
     %% Bảng ROLES
     ROLES {
