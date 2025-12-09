@@ -27,7 +27,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (password_verify($password, $user['password'])) {
             // Đăng nhập thành công
             $_SESSION['user_id'] = $user['id'];
-            php session_regenerate_id(true);
             $_SESSION['username'] = $user['username'];
             $_SESSION['role'] = $user['role'];
             
