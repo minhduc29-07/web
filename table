@@ -42,3 +42,5 @@ ADD COLUMN cost_price DECIMAL(15, 0) NOT NULL DEFAULT 0;
 -- 3. Thêm cột unit_cost_price vào bảng SALES
 ALTER TABLE sales
 ADD COLUMN unit_cost_price DECIMAL(15, 0) NOT NULL;
+
+ALTER TABLE users ADD COLUMN remember_token VARCHAR(255) NULL;
