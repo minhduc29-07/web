@@ -66,7 +66,7 @@ erDiagram
     }
 
     %% Quan hệ
-    ROLES ||--|{ USERS : "belongs to"
+    ROLES ||--o{ USERS : "belongs to"
     USERS ||--o{ SESSIONS : "has"
     USERS ||--o{ PASSWORD_RESETS : "has"
     USERS ||--o{ SHOES : "manages"
