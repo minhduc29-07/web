@@ -1,24 +1,28 @@
 <?php
-// Cấu hình hiển thị lỗi
+// Cấu hình hiển thị lỗi (để dễ debug)
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+// Cài đặt múi giờ Việt Nam
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 
 session_start();
 
-// CẤU HÌNH DATABASE
-define('DB_SERVER', 'localhost'); // Sửa lại nếu trên hosting
-define('DB_USERNAME', 'root');    // Sửa lại nếu trên hosting
-define('DB_PASSWORD', '');        // Sửa lại nếu trên hosting
-define('DB_NAME', 'shoe_store');  // Sửa lại nếu trên hosting
+// --- CẤU HÌNH DATABASE ---
+define('DB_SERVER', 'localhost'); // Sửa lại thông tin nếu cần
+define('DB_USERNAME', 'root');
+define('DB_PASSWORD', '');
+define('DB_NAME', 'shoe_store');
 
 $conn = new mysqli(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_NAME);
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
+
+// Set font chữ tiếng Việt và múi giờ cho MySQL
+$conn->set_charset("utf8mb4");
 $conn->query("SET time_zone = '+07:00'");
 $conn->autocommit(TRUE);
 
@@ -49,15 +53,32 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_user'])) {
         $stmt->close();
     }
 }
-// --------------------------------------------------------
 
+// --- CÁC HÀM HỖ TRỢ (HELPER FUNCTIONS) ---
+
+// 1. Hàm làm sạch dữ liệu đầu ra (Chống hack XSS)
 function html_safe($str) {
     return htmlspecialchars($str, ENT_QUOTES, 'UTF-8');
 }
 
+// 2. Hàm bắt buộc đăng nhập (Dùng cho các trang nội bộ)
 function check_login() {
     if (!isset($_SESSION['user_id'])) {
         header("Location: login.php");
+        exit;
+    }
+}
+
+// 3. Hàm kiểm tra quyền Admin (QUAN TRỌNG: ĐÃ THÊM LẠI HÀM NÀY)
+function check_admin() {
+    // Nếu chưa đăng nhập -> Đẩy về login
+    if (!isset($_SESSION['user_id'])) {
+        header("Location: login.php");
+        exit;
+    }
+    // Nếu đăng nhập rồi mà không phải admin -> Đẩy về trang chủ báo lỗi
+    if ($_SESSION['role'] !== 'admin') {
+        header("Location: index.php?error=admin_only");
         exit;
     }
 }
