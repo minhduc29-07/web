@@ -1,42 +1,36 @@
-# 👟 Shoe Inventory Management System
+# Shoe Store POS System 👟
 
-A simple inventory management system built with **pure PHP** and **MySQL**. This application allows for product management, stock tracking, and user account management with role-based access control (Admin/Staff).
+A web-based Point of Sale (POS) and Inventory Management System designed for small shoe retailers. [cite_start]This project was developed as part of the **INS3064 Multimedia Design and Web Development** course at VNU-IS[cite: 1, 2].
 
-## 🚀 Key Features
+## 📑 Project Overview
+This system helps shop owners manage their inventory, process sales, and track financial performance through detailed reports. It features a secure login system and a user-friendly interface.
 
--   **Authentication**: Secure Login, Registration, and Logout.
--   **Role-Based Access Control (RBAC)**:
-    -   **Admin**: Full access to Product Management (CRUD) + User Management (Add/Edit/Delete Staff accounts).
-    -   **Staff**: Access to Product Management only (Cannot access the User Management page).
--   **Product Management**:
-    -   Add, Update, and Delete shoe products.
-    -   Search products by Name, Brand, or SKU.
-    -   Validation for duplicate SKUs.
--   **Interface**: Responsive, clean UI built with pure CSS.
+## ✨ Key Features
 
-## 🛠️ Tech Stack
+### 👤 User Authentication & Management
+* **Secure Registration**: New staff members can register with encrypted passwords.
+* **Role-based Access**: Admins have exclusive access to user management and financial reports.
+* **Account Control**: Create, edit, and manage staff accounts directly from the dashboard.
 
--   **Language**: PHP (Native)
--   **Database**: MySQL
--   **Frontend**: HTML5, CSS3 (Custom styles)
+### 📦 Inventory & Warehouse
+* **Product Tracking**: Manage product details including SKU, Brand, Price, and Cost Price.
+* **Low Stock Alerts**: Automatic visual warnings when product quantities drop below 5 units.
+* **Warehouse Overview**: Real-time statistics on total products, total stock, and total warehouse value.
 
-## ⚙️ Installation Guide
+### 🛒 Point of Sale (POS)
+* **Visual Catalog**: Browse products with clear images and pricing.
+* **Size Management**: Dynamic size selection with real-time stock availability display.
+* **Smart Cart**: Automatically calculates bill totals and updates inventory upon payment.
 
-1.  **Clone the project** into your XAMPP/WAMP `htdocs` directory.
-2.  **Database Setup**:
-    -   Open phpMyAdmin and create a new database named: `shoe_store`.
-    -   Import the SQL file (or run the SQL script to create `users` and `shoes` tables).
-3.  **Configuration**:
-    -   Check the `db.php` file to ensure database connection details are correct (default: user `root`, empty password).
-4.  **Default Admin Credentials**:
-    -   Username: `admin`
-    -   Password: `123456`
+### 📊 Reports & History
+* **Financial Analytics**: View daily revenue, COGS (Cost of Goods Sold), and Gross Profit.
+* **Performance Tracking**: Top 5 best-selling products ranked by quantity.
+* **Transaction Logs**: Comprehensive daily revenue summary and detailed transaction history.
 
----
-
-## 📊 Database Schema (ER Diagram)
-
-Below is the extended architecture schema for the system (rendered automatically by GitHub):
+## 🛠 Tech Stack
+* **Frontend**: HTML5, CSS3.
+* **Backend**: PHP.
+* **Database**: MySQL.
 
 ```mermaid
 erDiagram
