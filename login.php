@@ -1,8 +1,6 @@
 <?php
 require_once 'db.php';
 $message = '';
-
-// Nếu đã đăng nhập thì vào thẳng POS
 if (isset($_SESSION['user_id'])) {
     header("Location: pos.php");
     exit;
@@ -11,7 +9,6 @@ if (isset($_SESSION['user_id'])) {
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $conn->real_escape_string($_POST['username']);
     $password = $_POST['password']; 
-    // Lấy giá trị checkbox Remember Me
     $remember = isset($_POST['remember']);
 
     $stmt = $conn->prepare("SELECT id, username, password, role FROM users WHERE username = ?");
@@ -23,21 +20,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $user = $result->fetch_assoc();
         
         if (password_verify($password, $user['password'])) {
-            // 1. Lưu Session (Đăng nhập bình thường)
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['role'] = $user['role'];
-
-            // 2. XỬ LÝ COOKIE (NẾU CHỌN REMEMBER ME)
             if ($remember) {
-                // Tạo một chuỗi mã ngẫu nhiên
                 $token = bin2hex(random_bytes(32)); 
-                
-                // Lưu token này vào Database để đối chiếu sau này
                 $uid = $user['id'];
                 $conn->query("UPDATE users SET remember_token = '$token' WHERE id = $uid");
-
-                // Lưu Cookie vào trình duyệt: Dạng "ID:Token" (Lưu trong 30 ngày)
                 $cookie_value = $uid . ':' . $token;
                 setcookie('remember_user', $cookie_value, time() + (86400 * 30), "/");
             }
