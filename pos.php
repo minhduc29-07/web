@@ -2,7 +2,6 @@
 require_once 'db.php';
 check_login();
 
-// --- LOGIC PHP GIỎ HÀNG ---
 if (!isset($_SESSION['cart'])) { $_SESSION['cart'] = []; }
 $message = ''; $message_type = '';
 
@@ -82,8 +81,6 @@ if (isset($_POST['checkout'])) {
         }
     } else { $message = "Cart is empty!"; $message_type = "error"; }
 }
-
-// --- LOGIC GOM NHÓM SẢN PHẨM ---
 $raw_data = $conn->query("SELECT * FROM shoes WHERE quantity > 0 ORDER BY name ASC, size ASC");
 $grouped_products = [];
 
