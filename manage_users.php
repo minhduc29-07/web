@@ -1,11 +1,9 @@
 <?php
 require_once 'db.php';
-check_admin(); // Chỉ Admin mới được vào trang này
+check_admin();
 
 $message = '';
 $message_type = '';
-
-// Biến cho form
 $edit_user_id = '';
 $edit_username = '';
 $edit_email = '';
@@ -13,17 +11,12 @@ $edit_dob = '';
 $edit_location = '';
 $edit_role = 'staff';
 $is_editing = false;
-
-// --- 1. XỬ LÝ XÓA USER (ĐÂY LÀ PHẦN BẠN BỊ THIẾU) ---
 if (isset($_GET['delete'])) {
     $user_id_to_delete = (int)$_GET['delete'];
-
-    // Chặn không cho xóa chính mình
     if ($user_id_to_delete == $_SESSION['user_id']) {
         $message = "Error: You cannot delete your own account!";
         $message_type = 'error';
     } else {
-        // Thực hiện xóa
         $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
         $stmt->bind_param("i", $user_id_to_delete);
         
@@ -38,45 +31,36 @@ if (isset($_GET['delete'])) {
     }
 }
 
-// --- 2. XỬ LÝ FORM (TẠO MỚI & CẬP NHẬT) ---
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_user'])) {
 
     $username = $conn->real_escape_string($_POST['username']);
-    $password = $_POST['password']; // Mật khẩu thô
+    $password = $_POST['password'];
     $email = $conn->real_escape_string($_POST['email']);
     $dob = $conn->real_escape_string($_POST['dob']);
     $location = $conn->real_escape_string($_POST['location']);
     $role = $conn->real_escape_string($_POST['role']);
-    $user_id = $conn->real_escape_string($_POST['user_id']); // Nếu rỗng là tạo mới
+    $user_id = $conn->real_escape_string($_POST['user_id']);
 
-    // Giữ lại giá trị nhập nếu lỗi
     $edit_user_id = $user_id;
     $edit_username = $username;
     $edit_email = $email;
     $edit_dob = $dob;
     $edit_location = $location;
     $edit_role = $role;
-
-    // Validate cơ bản
     if (empty($username) || empty($email) || empty($dob) || empty($location) || empty($role)) {
         $message = "Error: Please fill in all fields (except Password if not changing).";
         $message_type = 'error';
     }
-    // Nếu tạo mới thì bắt buộc có pass
     else if (empty($user_id) && empty($password)) {
         $message = "Error: Please enter a password for the new account.";
         $message_type = 'error';
     }
-    // Nếu có nhập pass thì phải >= 6 ký tự
     else if (!empty($password) && strlen($password) < 6) { 
         $message = "Password must be at least 6 characters.";
         $message_type = 'error';
     } 
     else {
-        // --- TẠO MỚI (INSERT) ---
         if (empty($user_id)) {
-
-            // Kiểm tra trùng username/email
             $stmt_check = $conn->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
             $stmt_check->bind_param("ss", $username, $email);
             $stmt_check->execute();
@@ -86,7 +70,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_user'])) {
                 $message = "Username or Email already exists.";
                 $message_type = 'error';
             } else {
-                // Mã hóa mật khẩu
                 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
                 if (!$hashed_password) {
@@ -99,7 +82,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_user'])) {
                     if ($stmt->execute()) {
                         $message = "User created successfully!";
                         $message_type = 'success';
-                        // Reset form
                         $edit_username = $edit_email = $edit_dob = $edit_location = '';
                         $edit_role = 'staff';
                     } else {
@@ -111,18 +93,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_user'])) {
             }
             $stmt_check->close();
         } 
-        
-        // --- CẬP NHẬT (UPDATE) ---
         else {
             $stmt = null;
-
-            // Nếu admin nhập pass mới -> Đổi pass
             if (!empty($password)) {
                 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
                 $stmt = $conn->prepare("UPDATE users SET username = ?, password = ?, email = ?, dob = ?, location = ?, role = ? WHERE id = ?");
                 $stmt->bind_param("ssssssi", $username, $hashed_password, $email, $dob, $location, $role, $user_id);
             } else {
-                // Không đổi pass
                 $stmt = $conn->prepare("UPDATE users SET username = ?, email = ?, dob = ?, location = ?, role = ? WHERE id = ?");
                 $stmt->bind_param("sssssi", $username, $email, $dob, $location, $role, $user_id);
             }
@@ -145,8 +122,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_user'])) {
         }
     }
 }
-
-// --- 3. LẤY DỮ LIỆU ĐỂ SỬA ---
 if (isset($_GET['edit'])) {
     $user_id_to_edit = (int)$_GET['edit'];
     $stmt = $conn->prepare("SELECT username, email, dob, location, role FROM users WHERE id = ?");
@@ -166,8 +141,6 @@ if (isset($_GET['edit'])) {
     }
     $stmt->close();
 }
-
-// --- 4. HIỂN THỊ DANH SÁCH ---
 $users_list = [];
 $result_read = $conn->query("SELECT id, username, email, dob, location, role FROM users ORDER BY username ASC");
 while ($row = $result_read->fetch_assoc()) {
