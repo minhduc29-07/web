@@ -1,5 +1,4 @@
 <?php
-// Enable error display for debugging
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -9,12 +8,10 @@ echo "<style>body { font-family: Arial, sans-serif; padding: 20px; line-height: 
 echo "</head><body>";
 echo "<h1>Resetting Admin Password...</h1>";
 
-require_once 'db.php'; // Database connection
+require_once 'db.php'; 
 
-// New password
 $new_password = '123456';
 
-// SECURITY: Hash the new password
 $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
 
 if (!$hashed_password) {
@@ -24,7 +21,6 @@ if (!$hashed_password) {
 
 echo "<p>Generated new hash: $hashed_password</p>";
 
-// Prepare UPDATE statement
 $stmt = $conn->prepare("UPDATE users SET password = ? WHERE username = 'admin'");
 if (!$stmt) {
     echo "<p class='error'>Error preparing statement: " . $conn->error . "</p>";
@@ -33,7 +29,6 @@ if (!$stmt) {
 
 $stmt->bind_param("s", $hashed_password);
 
-// Execute
 if ($stmt->execute()) {
     if ($stmt->affected_rows > 0) {
         echo "<p class='success'>SUCCESS! The password for account 'admin' has been reset to '123456'.</p>";
