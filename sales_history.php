@@ -2,7 +2,6 @@
 require_once 'db.php';
 check_login();
 
-// Kiểm tra xem có ngày nào được truyền vào không?
 $filter_date = isset($_GET['date']) ? $_GET['date'] : '';
 
 // 1. LẤY BÁO CÁO DOANH THU (Chỉ hiện khi KHÔNG lọc theo ngày)
@@ -24,11 +23,10 @@ $sql_history = "SELECT s.*, u.username
                 JOIN users u ON s.user_id = u.id ";
 
 if (!empty($filter_date)) {
-    // Nếu có ngày, thêm điều kiện WHERE
     $sql_history .= " WHERE DATE(s.sale_date) = '$filter_date' ";
 }
 
-$sql_history .= " ORDER BY s.sale_date DESC"; // Sắp xếp mới nhất lên đầu
+$sql_history .= " ORDER BY s.sale_date DESC"; 
 $history = $conn->query($sql_history);
 ?>
 
