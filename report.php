@@ -4,7 +4,6 @@ check_login();
 
 // --- 1. TÍNH DOANH THU, GIÁ VỐN & LỢI NHUẬN HÔM NAY ---
 $today = date('Y-m-d');
-// CẬP NHẬT: Thêm tính tổng unit_cost_price
 $sql_today = "SELECT 
                 SUM(total_price) as today_revenue,
                 SUM(unit_cost_price * quantity) as today_cogs 
@@ -12,8 +11,8 @@ $sql_today = "SELECT
               WHERE DATE(sale_date) = '$today'";
 $result_today = $conn->query($sql_today)->fetch_assoc();
 $revenue_today = $result_today['today_revenue'] ?? 0;
-$cogs_today = $result_today['today_cogs'] ?? 0; // Giá vốn hàng bán (COGS)
-$profit_today = $revenue_today - $cogs_today; // Lợi nhuận gộp hôm nay
+$cogs_today = $result_today['today_cogs'] ?? 0; 
+$profit_today = $revenue_today - $cogs_today;
 
 // --- 2. TÍNH DOANH THU & LỢI NHUẬN THEO NGÀY ---
 $sql_daily = "SELECT 
@@ -28,7 +27,6 @@ $sql_daily = "SELECT
 $result_daily = $conn->query($sql_daily);
 
 // --- 3. BÁO CÁO TOP 5 SẢN PHẨM BÁN CHẠY NHẤT (Theo Số lượng) ---
-// TRUY VẤN MỚI: Nhóm theo tên sản phẩm, sắp xếp theo số lượng bán được
 $sql_top_sellers = "SELECT 
                         product_name, 
                         SUM(quantity) as total_sold,
