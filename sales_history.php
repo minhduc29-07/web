@@ -4,7 +4,7 @@ check_login();
 
 $filter_date = isset($_GET['date']) ? $_GET['date'] : '';
 
-// 1. LẤY BÁO CÁO DOANH THU (Chỉ hiện khi KHÔNG lọc theo ngày)
+// 1. LẤY BÁO CÁO DOANH THU 
 $report = null;
 if (empty($filter_date)) {
     $sql_report = "SELECT 
@@ -17,7 +17,7 @@ if (empty($filter_date)) {
     $report = $conn->query($sql_report);
 }
 
-// 2. LẤY CHI TIẾT GIAO DỊCH (Có lọc theo ngày nếu cần)
+// 2. LẤY CHI TIẾT GIAO DỊCH 
 $sql_history = "SELECT s.*, u.username 
                 FROM sales s 
                 JOIN users u ON s.user_id = u.id ";
