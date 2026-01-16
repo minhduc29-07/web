@@ -6,11 +6,8 @@ check_login();
 $user_id = $_SESSION['user_id'];
 $username = $_SESSION['username'];
 $role = $_SESSION['role'];
-
 $message = ''; 
 $message_type = ''; 
-
-// Biến cho form Edit
 $edit_note_id = '';
 $edit_sku = '';
 $edit_name = '';
@@ -18,12 +15,10 @@ $edit_brand = '';
 $edit_size = '';
 $edit_quantity = '';
 $edit_price = '';
-$edit_cost_price = ''; // Đã thêm
-$edit_image = ''; // Biến chứa tên ảnh hiện tại khi sửa
+$edit_cost_price = ''; 
+$edit_image = ''; 
 $is_editing = false; 
 
-
-// Xử lý lỗi quyền truy cập
 if (isset($_GET['error'])) {
     if ($_GET['error'] == 'admin_only') {
         $message = "Error: You do not have permission to access the User Management page.";
@@ -31,7 +26,6 @@ if (isset($_GET['error'])) {
     }
 }
 
-// --- 2. XỬ LÝ FORM (THÊM / SỬA) ---
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_shoe'])) {
     
     $sku = $conn->real_escape_string($_POST['sku']);
@@ -40,36 +34,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_shoe'])) {
     $size = (int)$_POST['size'];
     $quantity = (int)$_POST['quantity'];
     $price = (float)$_POST['price'];
-    $cost_price = (float)$_POST['cost_price']; // Đã thêm
+    $cost_price = (float)$_POST['cost_price']; 
     $note_id = $conn->real_escape_string($_POST['note_id']); 
 
-    // Giữ lại giá trị nhập nếu có lỗi
     $edit_sku = $sku;
     $edit_name = $name;
     $edit_brand = $brand;
     $edit_size = $size;
     $edit_quantity = $quantity;
     $edit_price = $price;
-    $edit_cost_price = $cost_price; // Đã thêm
+    $edit_cost_price = $cost_price; 
 
-    // --- LOGIC UPLOAD ẢNH ---
-    $image_filename = ""; // Tên file ảnh sẽ lưu vào DB
-    $has_new_image = false; // Cờ kiểm tra xem có upload ảnh mới không
+    $image_filename = ""; 
+    $has_new_image = false; 
 
     if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
         $target_dir = "uploads/";
-        // Tạo thư mục uploads nếu chưa có
         if (!file_exists($target_dir)) {
             mkdir($target_dir, 0777, true);
         }
-        
-        // Lấy đuôi file (jpg, png...)
+
         $file_extension = strtolower(pathinfo($_FILES["image"]["name"], PATHINFO_EXTENSION));
-        
-        // Kiểm tra đuôi file hợp lệ
+ 
         $allowed_ext = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         if (in_array($file_extension, $allowed_ext)) {
-            // Đặt tên file mới: time_sku.duoi (để tránh trùng tên)
             $new_filename = time() . "_" . preg_replace('/[^a-zA-Z0-9]/', '', $sku) . "." . $file_extension;
             $target_file = $target_dir . $new_filename;
             
@@ -86,8 +74,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_shoe'])) {
         }
     }
 
-    // Nếu không có lỗi upload thì mới lưu vào DB
-    // CẬP NHẬT: Kiểm tra cả cost_price
     if (empty($message)) {
         if (empty($sku) || empty($name) || empty($brand) || $size <= 0 || $quantity < 0 || $price <= 0 || $cost_price < 0) {
             $message = "Error: Please fill in all fields correctly (Price and Cost Price must be positive).";
@@ -95,18 +81,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_shoe'])) {
         } else {
             try {
                 if (!empty($note_id)) {
-                    // --- UPDATE (SỬA) ---
                     if ($has_new_image) {
-                        // Dòng 104 (UPDATE CÓ IMAGE): Đảm bảo 8 tham số và 8 biến.
-                        // CÁC CỘT: sku, name, brand, size, quantity, price, cost_price, image
                         $stmt = $conn->prepare("UPDATE shoes SET sku = ?, name = ?, brand = ?, size = ?, quantity = ?, price = ?, cost_price = ?, image = ? WHERE id = ?");
-                        // 8 ký tự định dạng: s, s, s, i, i, d, d, s.  9 biến (thêm $note_id)
                         $stmt->bind_param("sssiiddsi", $sku, $name, $brand, $size, $quantity, $price, $cost_price, $image_filename, $note_id); 
                     } else {
-                        // Dòng 109 (UPDATE KHÔNG CÓ IMAGE): Đảm bảo 7 tham số và 7 biến.
-                        // CÁC CỘT: sku, name, brand, size, quantity, price, cost_price
                         $stmt = $conn->prepare("UPDATE shoes SET sku = ?, name = ?, brand = ?, size = ?, quantity = ?, price = ?, cost_price = ? WHERE id = ?");
-                        // 7 ký tự định dạng: s, s, s, i, i, d, d. 8 biến (thêm $note_id)
                         $stmt->bind_param("sssiiddi", $sku, $name, $brand, $size, $quantity, $price, $cost_price, $note_id);
                     }
                     
@@ -121,23 +100,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_shoe'])) {
                     }
 
                 } else {
-                    // --- INSERT (THÊM MỚI) ---
-                    // Nếu không upload ảnh, dùng ảnh mặc định
                     if (!$has_new_image) {
                         $image_filename = 'no-image.png'; 
                     }
-
-                    // Dòng 123 (INSERT): Đảm bảo 8 cột.
                     $stmt = $conn->prepare("INSERT INTO shoes (sku, name, brand, size, quantity, price, cost_price, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                    // Dòng 124 (bind_param): Đảm bảo 8 biến và 8 định dạng.
-                    // s (sku), s (name), s (brand), i (size), i (quantity), d (price), d (cost_price), s (image)
                     $stmt->bind_param("sssiidds", $sku, $name, $brand, $size, $quantity, $price, $cost_price, $image_filename); 
                     $stmt->execute();
 
                     if ($stmt->affected_rows > 0) {
                         $message = "New product added successfully!";
                         $message_type = 'success';
-                        // Reset form
                         $edit_sku = $edit_name = $edit_brand = '';
                         $edit_size = $edit_quantity = $edit_price = $edit_cost_price = 0;
                     } else {
@@ -159,13 +131,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_shoe'])) {
             }
         }
     } else {
-        // Nếu có lỗi upload ảnh thì giữ trạng thái form
          $is_editing = !empty($note_id);
     }
 }
-
-// --- 1. LẤY SỐ LIỆU THỐNG KÊ (DASHBOARD) ---
-// CẬP NHẬT: Thêm tính toán Tổng giá vốn (total_cost)
 $stats = $conn->query("
     SELECT 
         COUNT(*) as total_products,
@@ -175,8 +143,6 @@ $stats = $conn->query("
         COUNT(CASE WHEN quantity < 5 THEN 1 END) as low_stock
     FROM shoes
 ")->fetch_assoc();
-
-// --- 3. XÓA SẢN PHẨM ---
 if (isset($_GET['delete'])) {
     $note_id_to_delete = (int)$_GET['delete'];
     $stmt = $conn->prepare("DELETE FROM shoes WHERE id = ?");
@@ -191,11 +157,8 @@ if (isset($_GET['delete'])) {
     }
     $stmt->close();
 }
-
-// --- 4. LẤY DỮ LIỆU ĐỂ SỬA ---
 if (isset($_GET['edit'])) {
     $note_id_to_edit = (int)$_GET['edit'];
-    // CẬP NHẬT: Lấy thêm cột cost_price
     $stmt = $conn->prepare("SELECT sku, name, brand, size, quantity, price, cost_price, image FROM shoes WHERE id = ?");
     $stmt->bind_param("i", $note_id_to_edit);
     $stmt->execute();
@@ -210,18 +173,16 @@ if (isset($_GET['edit'])) {
         $edit_size = $note['size'];
         $edit_quantity = $note['quantity'];
         $edit_price = $note['price'];
-        $edit_cost_price = $note['cost_price']; // Đã thêm
-        $edit_image = $note['image']; // Lấy tên ảnh
+        $edit_cost_price = $note['cost_price'];
+        $edit_image = $note['image'];
         $is_editing = true;
     }
     $stmt->close();
 }
 
-// --- 5. TÌM KIẾM VÀ HIỂN THỊ DANH SÁCH ---
 $search_query = "";
 $search_term = "";
 
-// CẬP NHẬT: Thêm cột cost_price vào truy vấn chính
 $sql = "SELECT *, cost_price FROM shoes";
 
 if (isset($_GET['search']) && !empty(trim($_GET['search']))) {
