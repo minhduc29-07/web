@@ -60,7 +60,7 @@ if (isset($_GET['remove'])) {
     }
 }
 
-if (isset($_POST['checkout'])) {
+if (isset($_POST['checkout'])) {     //thanh toán//
     if (!empty($_SESSION['cart'])) {
         $user_id = $_SESSION['user_id'];
         $conn->begin_transaction();
@@ -84,7 +84,7 @@ if (isset($_POST['checkout'])) {
 $raw_data = $conn->query("SELECT * FROM shoes WHERE quantity > 0 ORDER BY name ASC, size ASC");
 $grouped_products = [];
 
-while($row = $raw_data->fetch_assoc()) {
+while($row = $raw_data->fetch_assoc()) {        //lấy từng dữ liệu gán vào //
     $name = $row['name'];
     if (!isset($grouped_products[$name])) {
         $grouped_products[$name] = [
