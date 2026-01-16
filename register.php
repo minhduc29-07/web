@@ -9,11 +9,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = $conn->real_escape_string($_POST['email']);
     $dob = $conn->real_escape_string($_POST['dob']);
     $location = $conn->real_escape_string($_POST['location']);
-
-    // Default role is 'staff'
     $role = 'staff';
 
-    // Validate required fields and password length
     if (empty($username) || empty($password) || empty($email) || empty($dob) || empty($location)) {
         $message = "Please fill in all required fields.";
         $message_type = 'error';
@@ -21,7 +18,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $message = "Password must be at least 6 characters long.";
         $message_type = 'error';
     } else {
-        // Check if username or email already exists
         $stmt_check = $conn->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
         $stmt_check->bind_param("ss", $username, $email);
         $stmt_check->execute();
@@ -31,19 +27,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $message = "Username or Email already exists.";
             $message_type = 'error';
         } else {
-            // SECURITY: Hash password before saving
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
             if (!$hashed_password) {
                 $message = "Critical error: password_hash failed.";
                 $message_type = 'error';
             } else {
-                // Insert new user (store hashed password)
                 $stmt_insert = $conn->prepare("INSERT INTO users (username, password, role, email, dob, location) VALUES (?, ?, ?, ?, ?, ?)");
                 $stmt_insert->bind_param("ssssss", $username, $hashed_password, $role, $email, $dob, $location);
 
                 if ($stmt_insert->execute()) {
-                    // Redirect after successful registration
                     header("Location: login.php?registered=1");
                     exit;
                 } else {
