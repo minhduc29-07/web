@@ -2,7 +2,7 @@
 require_once 'db.php';
 check_login();
 
-// --- 1. TÍNH DOANH THU, GIÁ VỐN & LỢI NHUẬN HÔM NAY ---
+//1. TÍNH DOANH THU, GIÁ VỐN & LỢI NHUẬN HÔM NAY
 $today = date('Y-m-d');
 $sql_today = "SELECT 
                 SUM(total_price) as today_revenue,
@@ -14,7 +14,7 @@ $revenue_today = $result_today['today_revenue'] ?? 0;
 $cogs_today = $result_today['today_cogs'] ?? 0; 
 $profit_today = $revenue_today - $cogs_today;
 
-// --- 2. TÍNH DOANH THU & LỢI NHUẬN THEO NGÀY ---
+//2. TÍNH DOANH THU & LỢI NHUẬN THEO NGÀY
 $sql_daily = "SELECT 
                 DATE(sale_date) as report_date, 
                 SUM(total_price) as daily_revenue, 
@@ -26,7 +26,7 @@ $sql_daily = "SELECT
               ORDER BY report_date DESC";
 $result_daily = $conn->query($sql_daily);
 
-// --- 3. BÁO CÁO TOP 5 SẢN PHẨM BÁN CHẠY NHẤT (Theo Số lượng) ---
+//3. BÁO CÁO TOP 5 SẢN PHẨM BÁN CHẠY NHẤT
 $sql_top_sellers = "SELECT 
                         product_name, 
                         SUM(quantity) as total_sold,
